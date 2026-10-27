@@ -1,5 +1,5 @@
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#2F5A24"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Koji Tea">
+<meta name="theme-color" content="#2F5A24"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Koji Tea"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <script src="vendor/firebase-app-compat.js"></script>
@@ -63,7 +63,9 @@ window.KOJI_DB_PROVIDER=()=>new Promise(resolve=>{
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}
 *{box-sizing:border-box}
 html,body{height:100%}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+button{-webkit-appearance:none;appearance:none;touch-action:manipulation}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
 h1,h2,h3{font-family:var(--f-display);font-weight:600;margin:0;text-wrap:balance;letter-spacing:.005em}
 h1{font-size:1.6rem} h2{font-size:1.2rem} h3{font-size:1.02rem}
@@ -218,7 +220,12 @@ form .f label,.f > span{font-weight:700;font-size:.86rem}
 .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .fields .wide{grid-column:1/-1}
 @media (max-width:480px){.fields{grid-template-columns:1fr}}
-input,select,textarea{width:100%;min-height:44px;padding:9px 11px;border:1px solid var(--line);border-radius:11px;background:var(--bg);min-width:0}
+input,select,textarea{width:100%;min-height:44px;padding:9px 11px;border:1px solid var(--line);border-radius:11px;background:var(--bg);min-width:0;font-size:16px;-webkit-appearance:none;appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:30px}
+input[type=date]{display:block;text-align:left;line-height:24px}
+input[type=date]::-webkit-date-and-time-value{text-align:left}
+input[type=checkbox]{-webkit-appearance:auto;appearance:auto}
+input[type=radio]{-webkit-appearance:auto;appearance:auto}
 textarea{min-height:70px;resize:vertical}
 input[type=checkbox]{width:22px;height:22px;min-height:0;accent-color:var(--deep)}
 .check{display:flex;align-items:center;gap:10px;font-weight:700}
