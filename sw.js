@@ -1,5 +1,5 @@
 // Garde l'application disponible hors connexion (les données passent par le cache Firestore).
-const C="koji-tea-v1";
+const C="koji-tea-v2";
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(["./","index.html","firebase-config.js","manifest.webmanifest","icon-192.png","apple-touch-icon.png"])));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))));self.clients.claim()});
 self.addEventListener("fetch",e=>{
