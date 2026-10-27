@@ -1,0 +1,29 @@
+<div id="login" hidden style="position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;padding:16px">
+ <form id="loginForm" class="card" style="width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px">
+  <img id="loginLogo" alt="Koji Tea" style="height:90px;align-self:center">
+  <h2 style="text-align:center">Connexion</h2>
+  <div class="f"><label for="lgMail">E-mail</label><input id="lgMail" type="email" autocomplete="username" required></div>
+  <div class="f"><label for="lgPass">Mot de passe</label><input id="lgPass" type="password" autocomplete="current-password" required></div>
+  <p id="lgErr" class="small" style="color:var(--bad);margin:0" hidden></p>
+  <button class="btn primary">Se connecter</button>
+ </form>
+</div>
+<script>
+"use strict";
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+window.KOJI_DB_PROVIDER=()=>new Promise(resolve=>{
+  if(!window.KOJI_FIREBASE_CONFIG||!window.firebase){resolve(null);return}
+  firebase.initializeApp(window.KOJI_FIREBASE_CONFIG);
+  const db=firebase.firestore();
+  db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+  const box=document.getElementById("login");
+  document.getElementById("loginLogo").src=(document.querySelector(".top img")||{}).src||"icon-192.png";
+  document.getElementById("loginForm").addEventListener("submit",e=>{
+    e.preventDefault();e.stopImmediatePropagation();const err=document.getElementById("lgErr");err.hidden=true;
+    firebase.auth().signInWithEmailAndPassword(document.getElementById("lgMail").value.trim(),document.getElementById("lgPass").value)
+      .catch(()=>{err.textContent="E-mail ou mot de passe incorrect.";err.hidden=false});
+  },true);
+  let done=false;
+  firebase.auth().onAuthStateChanged(u=>{if(u){box.hidden=true;if(!done){done=true;resolve(db)}}else box.hidden=false});
+});
+</script>
