@@ -757,6 +757,7 @@ VIEWS.reglages=()=>head("Réglages","TVA, commissions et sauvegardes.")+`<div cl
     <div class="f" style="margin-top:14px"><label for="importFile">Restaurer une sauvegarde (.json)</label><input id="importFile" type="file" accept=".json,application/json" data-change="import" ${READONLY?"disabled":""}></div></div>
   <div class="card"><h2>Données d’exemple</h2><p class="small muted" style="margin-top:0">Des exemples réalistes pour découvrir l’application. Ils sont marqués et s’effacent d’un clic sans toucher à vos vraies données.</p>
     <div class="row">${hasDemo()?`<button class="btn danger" data-act="clearDemo" data-confirm="Oui, effacer">Effacer les exemples</button>`:`<button class="btn" data-act="loadDemo">Charger les exemples</button>`}</div></div>
+  ${window.firebase&&firebase.apps&&firebase.apps.length&&firebase.auth().currentUser?`<div class="card"><h2>Compte</h2><p class="small muted" style="margin-top:0">Connecté avec ${esc(firebase.auth().currentUser.email)}.</p><button class="btn" data-act="logout">Se déconnecter</button></div>`:""}
   <div class="card"><h2>Tout recommencer</h2><p class="small muted" style="margin-top:0">Supprime toutes les données : produits, ventes, comptabilité. Faites une sauvegarde avant.</p><button class="btn danger" data-act="wipe" data-confirm="Confirmer la suppression totale" ${READONLY?"disabled":""}>Supprimer toutes les données</button></div>
   </div>`;
 
@@ -918,6 +919,7 @@ async function saveFile(filename,data){
   if(dl){try{await dl.save({filename,data});toast("Fichier enregistré.","bear");return}catch(e){if(e&&e.code==="declined")return;if(e&&e.code==="rate_limited"){toast("Un autre téléchargement est en cours, réessayez dans un instant.","bunny");return}}}
   openSheet(`<div class="sheet-head"><h2>${esc(filename)}</h2><button class="x" data-act="close" aria-label="Fermer">×</button></div><p class="small muted">Le téléchargement direct n’est pas disponible ici. Copiez le contenu et collez-le dans un fichier.</p><textarea id="dlText" readonly style="min-height:240px;font-family:ui-monospace,monospace;font-size:.78rem">${esc(data)}</textarea><div class="formfoot"><span></span><button class="btn primary" data-act="copyDl">Copier</button></div>`);
 }
+ACT.logout=()=>{firebase.auth().signOut().then(()=>location.reload())};
 ACT.copyDl=()=>{const t=$("#dlText");navigator.clipboard?.writeText(t.value).then(()=>toast("Copié.","bear"),()=>{t.select()})};
 
 document.addEventListener("click",e=>{

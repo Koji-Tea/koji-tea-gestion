@@ -12,7 +12,8 @@
 "use strict";
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 window.KOJI_DB_PROVIDER=()=>new Promise(resolve=>{
-  if(!window.KOJI_FIREBASE_CONFIG||!window.firebase){resolve(null);return}
+  if(!window.KOJI_FIREBASE_CONFIG){resolve(null);return}
+  if(!window.firebase){document.getElementById("login").hidden=false;document.getElementById("loginForm").innerHTML='<h2 style="text-align:center">Connexion impossible</h2><p class="small" style="text-align:center">Vérifiez la connexion internet, puis rechargez la page.</p>';return}
   firebase.initializeApp(window.KOJI_FIREBASE_CONFIG);
   const db=firebase.firestore();
   db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
