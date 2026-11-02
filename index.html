@@ -232,6 +232,10 @@ input[type=checkbox]{width:22px;height:22px;min-height:0;accent-color:var(--deep
 .lines{display:flex;flex-direction:column;gap:8px}
 .line{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) 40px;gap:6px;align-items:center}
 .line.l3{grid-template-columns:minmax(0,2fr) minmax(0,1fr) 40px}
+.line.l3d{grid-template-columns:minmax(0,220px) 40px}
+.line.l4c{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1.1fr) 40px}
+.line.l4s{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 40px}
+@media (max-width:520px){.line.l4c{grid-template-columns:1fr 1fr 40px}.line.l4c input[list]{grid-column:1/3}.line.l4c .x{grid-row:1;grid-column:3}.line.l4s{grid-template-columns:1fr 1fr 40px;padding-bottom:8px;border-bottom:1px dashed var(--line)}.line.l4s input[type=date]{grid-column:1/3}.line.l4s .x{grid-row:1;grid-column:3}.line.l4s input[data-k=q]{grid-column:1/3}}
 .line.l4{grid-template-columns:minmax(0,1.6fr) minmax(0,.9fr) minmax(0,.9fr) minmax(0,1.1fr) 40px}
 @media (max-width:520px){.line.l4{grid-template-columns:1fr 1fr 40px;padding-bottom:8px;border-bottom:1px dashed var(--line)}.line.l4 select{grid-column:1/-1}.line.l4 .x{order:4}.line.l4 input[type=date]{order:5;grid-column:1/3}.line.l4.hdr{display:none}}
 .line .x{width:40px;height:40px;font-size:1.1rem}
@@ -364,7 +368,16 @@ async function initStore(){
 const ready=()=>MODE!=="loading"&&LOADED.size>=COLS.length+1;
 
 /* ---------- Calculs ---------- */
-function tickets(){return memo("tickets",()=>all("sales").flatMap(b=>(b.tickets||[]).map(t=>({...t,_b:b.id,_demo:!!b.demo}))).sort((a,b)=>a.ts<b.ts?1:-1))}
+function costRatio(){return memo("ratio",()=>{const ms=all("menu").filter(m=>+m.price>0&&(m.recipe||[]).length);const r=ms.length?sum(ms,m=>recipeCost(m.recipe)/m.price)/ms.length:0;return r>0&&r<1?r:.3})}
+function manualTickets(){const out=[];all("events").forEach(e=>(e.sales||[]).forEach((x,i)=>{const amt=+x.a||0;if(!amt)return;const q=+x.q||0;
+  out.push({id:"man-"+e.id+"-"+i,manual:true,ts:(x.d||e.date)+"T12:00:00",eventId:e.id,pay:x.p||"Mixte",total:amt,cost:Math.round(amt*costRatio()*100)/100,items:[{m:"",n:"Ventes saisies",q,p:q?amt/q:0,c:q?amt*costRatio()/q:0,u:[]}]})}));return out}
+function tickets(){return memo("tickets",()=>all("sales").flatMap(b=>(b.tickets||[]).map(t=>({...t,_b:b.id,_demo:!!b.demo}))).concat(manualTickets()).sort((a,b)=>a.ts<b.ts?1:-1))}
+const evDates=e=>[...new Set((e.dates&&e.dates.length?e.dates:[e.date]).filter(Boolean))].sort();
+const evLast=e=>{const d=evDates(e);return d[d.length-1]||e.date};
+function evWhen(e){const d=evDates(e);if(d.length<2)return fDay(d[0]||e.date);const a=new Date(d[0]+"T12:00:00"),b=new Date(d[d.length-1]+"T12:00:00");
+  const contiguous=d.length===daysTo(d[d.length-1])-daysTo(d[0])+1;return contiguous?a.toLocaleDateString("fr-CH",a.getMonth()===b.getMonth()?{day:"numeric"}:{day:"numeric",month:"short"})+" – "+fDay(d[d.length-1])+" ("+d.length+" jours)":d.map(x=>new Date(x+"T12:00:00").toLocaleDateString("fr-CH",{day:"numeric",month:"short"})).join(", ")}
+const costAmount=(c,rev)=>c.u==="%"?(+c.a||0)/100*(rev||0):(+c.a||0);
+const costLabel=c=>c.u==="%"?c.l+" ("+num(c.a,1)+" % du CA)":c.l;
 function stockInfo(){return memo("stock",()=>{
   const res={};
   all("products").forEach(p=>res[p.id]={lots:[],used:0,stock:0});
@@ -396,14 +409,14 @@ function salesStats(list){
 }
 function eventStats(ev){
   const list=tickets().filter(t=>t.eventId===ev.id);const s=salesStats(list);
-  const costs=sum(ev.costs||[],c=>c.a)+sum(all("expenses").filter(x=>x.eventId===ev.id),x=>x.amount);
+  const costs=sum(ev.costs||[],c=>costAmount(c,s.rev))+sum(all("expenses").filter(x=>x.eventId===ev.id),x=>x.amount);
   return {...s,costs,profit:s.rev-s.vat-s.cogs-s.fees-costs,perHour:ev.hours?s.rev/ev.hours:null,list}
 }
 function expenseEntries(){return memo("exp",()=>{
   const out=[];
   all("purchases").forEach(p=>out.push({date:p.date,cat:"Achats marchandises",label:(p.supplier||"Achat")+(p.note?" · "+p.note:""),amount:+p.total||0,src:"purchases",id:p.id}));
   all("expenses").forEach(x=>out.push({date:x.date,cat:x.cat||"Autre",label:x.label||x.cat,amount:+x.amount||0,src:"expenses",id:x.id,eventId:x.eventId}));
-  all("events").forEach(e=>(e.costs||[]).forEach((c,i)=>out.push({date:e.date,cat:"Frais de manifestation",label:c.l+" · "+e.name,amount:+c.a||0,src:"events",id:e.id})));
+  all("events").forEach(e=>{const rev=sum(tickets().filter(t=>t.eventId===e.id),t=>t.total);(e.costs||[]).forEach(c=>out.push({date:evLast(e),cat:"Frais de manifestation",label:costLabel(c)+" · "+e.name,amount:Math.round(costAmount(c,rev)*100)/100,src:"events",id:e.id}))});
   all("equipment").filter(m=>m.compta!==false&&+m.price>0&&m.date).forEach(m=>out.push({date:m.date,cat:"Matériel (investissement)",label:m.name+(m.qty>1?" ×"+m.qty:""),amount:(+m.price||0)*(+m.qty||1),src:"equipment",id:m.id}));
   return out.sort((a,b)=>a.date<b.date?1:-1)})}
 function lowStock(){const si=stockInfo();return all("products").filter(p=>+p.min>0&&si[p.id]&&si[p.id].stock<+p.min)}
@@ -532,7 +545,7 @@ VIEWS.accueil=()=>{
   else{const ms=[...new Set(list.map(t=>t.ts.slice(0,7)))].sort();const start=UI.period==="annee"?from.slice(0,7):(ms[0]||today().slice(0,7));
     for(let m=start;m<=today().slice(0,7);m=nextMonth(m)){data.push({v:sum(list.filter(t=>t.ts.slice(0,7)===m),t=>t.total),s:new Date(m+"-15").toLocaleDateString("fr-CH",{month:"short"}),t:fMonth(m)})}}
   // top drinks
-  const by={};list.forEach(t=>t.items.forEach(i=>{const b=by[i.m]=by[i.m]||{n:i.n,q:0,rev:0,cost:0};b.q+=i.q;b.rev+=i.p*i.q;b.cost+=i.c*i.q}));
+  const by={};list.filter(t=>!t.manual).forEach(t=>t.items.forEach(i=>{const b=by[i.m]=by[i.m]||{n:i.n,q:0,rev:0,cost:0};b.q+=i.q;b.rev+=i.p*i.q;b.cost+=i.c*i.q}));
   const top=Object.values(by).sort((a,b)=>b.rev-a.rev).slice(0,6);
   const pays={};list.forEach(t=>pays[t.pay]=(pays[t.pay]||0)+t.total);
   const payCol={"TWINT":"var(--ink)","Carte":"var(--deep)","Espèces":"var(--tea)"};
@@ -541,7 +554,7 @@ VIEWS.accueil=()=>{
   expiringLots(7).forEach(({p,l,d})=>al.push(`<a class="alert ${d<0?"bad":"warn"}" href="#stock" data-act="goTab" data-tab="dates"><img alt="" src="${IMG.bunny}" width="30" height="30"><span><b>${esc(p.name)}</b> · ${fQty(l.left,p.unit)} ${d<0?"périmé":"expire "+(d===0?"aujourd’hui":"dans "+d+" j")}</span></a>`));
   lowStock().forEach(p=>al.push(`<a class="alert warn" href="#stock"><img alt="" src="${IMG.chick}" width="30" height="30"><span><b>${esc(p.name)}</b> · stock bas (${fQty(stockInfo()[p.id].stock,p.unit)}, minimum ${fQty(p.min,p.unit)})</span></a>`));
   all("equipment").filter(m=>m.state==="À réparer"||m.state==="Hors service").forEach(m=>al.push(`<a class="alert info" href="#materiel"><span class="dot" style="background:var(--info)"></span><span><b>${esc(m.name)}</b> · ${esc(m.state.toLowerCase())}</span></a>`));
-  const next=all("events").filter(e=>e.date>=today()).sort((a,b)=>a.date<b.date?-1:1)[0];
+  const next=all("events").filter(e=>evLast(e)>=today()).sort((a,b)=>a.date<b.date?-1:1)[0];
   const evs=all("events").filter(e=>e.date<=today()&&inRange(e.date,from,to)).map(e=>({e,s:eventStats(e)})).sort((a,b)=>b.s.profit-a.s.profit);
   const hello=new Date().getHours()<12?"Bonjour":new Date().getHours()<18?"Bon après-midi":"Bonsoir";
   return head(hello+" Julie",`Voici où en est Koji Tea.`,`<div class="seg" role="tablist">${PERIODS.map(([k,l])=>`<button class="${UI.period===k?"on":""}" data-act="period" data-v="${k}">${l}</button>`).join("")}</div>`)+
@@ -560,7 +573,7 @@ VIEWS.accueil=()=>{
     </div>
     <div class="card"><div class="card-head"><h2>À surveiller</h2>${al.length?`<span class="pill warn">${al.length}</span>`:""}</div>
       ${al.length?`<div class="alerts">${al.slice(0,7).join("")}</div>`:emptyBox("bunny","Tout est en ordre","Aucun produit périmé, aucun stock bas.")}
-      ${next?`<div style="margin-top:14px" class="label">Prochaine manifestation</div><a class="item click" href="#evenements" style="text-decoration:none;color:inherit"><img alt="" src="${IMG.chick}" width="36" height="36"><div class="main"><b>${esc(next.name)}</b><span class="small muted">${fDay(next.date)} · ${esc(next.place||"")}</span></div><span class="pill info">J-${daysTo(next.date)}</span></a>`:""}
+      ${next?`<div style="margin-top:14px" class="label">Prochaine manifestation</div><a class="item click" href="#evenements" style="text-decoration:none;color:inherit"><img alt="" src="${IMG.chick}" width="36" height="36"><div class="main"><b>${esc(next.name)}</b><span class="small muted">${evWhen(next)} · ${esc(next.place||"")}</span></div><span class="pill info">${daysTo(next.date)>0?"J-"+daysTo(next.date):"En cours"}</span></a>`:""}
     </div>
   </div>
   <div class="grid g2">
@@ -577,11 +590,11 @@ const nextMonth=m=>{let [y,mo]=m.split("-").map(Number);mo++;if(mo>12){mo=1;y++}
 /* ---------- Caisse ---------- */
 VIEWS.caisse=()=>{
   const items=all("menu").filter(m=>m.active!==false).sort(byMenuCat);
-  const evs=all("events").filter(e=>e.date>=addDays(today(),-3)).sort((a,b)=>a.date<b.date?-1:1);
+  const evs=all("events").filter(e=>evLast(e)>=addDays(today(),-3)).sort((a,b)=>a.date<b.date?-1:1);
   let cur=ls("kojitea-event")||"";if(cur&&!get("events",cur))cur="";
   const cart=UI.cart.filter(c=>get("menu",c.m));
   const total=sum(cart,c=>get("menu",c.m).price*c.q);
-  const todays=tickets().filter(t=>t.ts.slice(0,10)===today());
+  const todays=tickets().filter(t=>!t.manual&&t.ts.slice(0,10)===today());
   const ts=salesStats(todays);
   const cats=[...new Set(items.map(i=>i.cat||"Autres"))];
   return `<div class="page-head"><div><h1>Caisse</h1><p>${todays.length?`Aujourd’hui : <b>${chf(ts.rev)}</b> · ${num(ts.cups)} boissons`:"Touchez une boisson pour l’ajouter."}</p></div>
@@ -681,12 +694,12 @@ VIEWS.carte=()=>{
 /* ---------- Manifestations ---------- */
 VIEWS.evenements=()=>{
   const evs=all("events");const t=today();
-  const up=evs.filter(e=>e.date>=t).sort((a,b)=>a.date<b.date?-1:1);
-  const past=evs.filter(e=>e.date<t).sort((a,b)=>a.date<b.date?1:-1);
+  const up=evs.filter(e=>evLast(e)>=t).sort((a,b)=>a.date<b.date?-1:1);
+  const past=evs.filter(e=>evLast(e)<t).sort((a,b)=>a.date<b.date?1:-1);
   const st=past.map(e=>({e,s:eventStats(e)}));
   const best=[...st].sort((a,b)=>b.s.profit-a.s.profit)[0];
-  const card=(e,s)=>`<div class="item click" data-act="openEvent" data-id="${e.id}"><img alt="" src="${IMG.chick}" width="40" height="40"><div class="main"><b>${esc(e.name)}</b><span class="tiny muted">${fDay(e.date)}${e.place?" · "+esc(e.place):""}${e.hours?" · "+num(e.hours,1)+" h":""}</span></div>
-    <div class="end">${s?`<b class="num" style="color:${s.profit<0?"var(--bad)":"var(--good)"}">${chf(s.profit)}</b><div class="tiny muted">${chf(s.rev)} de ventes</div>`:`<span class="pill info">${daysTo(e.date)===0?"Aujourd’hui":"Dans "+daysTo(e.date)+" j"}</span>`}</div></div>`;
+  const card=(e,s)=>`<div class="item click" data-act="openEvent" data-id="${e.id}"><img alt="" src="${IMG.chick}" width="40" height="40"><div class="main"><b>${esc(e.name)}</b><span class="tiny muted">${evWhen(e)}${e.place?" · "+esc(e.place):""}${e.hours?" · "+num(e.hours,1)+" h":""}</span></div>
+    <div class="end">${s?`<b class="num" style="color:${s.profit<0?"var(--bad)":"var(--good)"}">${chf(s.profit)}</b><div class="tiny muted">${chf(s.rev)} de ventes</div>`:`<span class="pill info">${daysTo(e.date)<=0?"En cours":"Dans "+daysTo(e.date)+" j"}</span>`}</div></div>`;
   return head("Manifestations","Marchés, fêtes et événements : ce que chacun rapporte vraiment.",`<button class="btn primary" data-act="newEvent">${ic("plus")}Manifestation</button>`)+
   (evs.length?`<div class="stack">
     ${best&&best.s.rev?`<div class="banner" style="margin:0"><img alt="" src="${IMG.bear}"><div class="grow"><b>Meilleure manifestation : ${esc(best.e.name)}</b><div class="small muted">${chf(best.s.profit)} de bénéfice net, ${chf(best.s.rev)} de ventes${best.s.perHour?", soit "+chf(best.s.perHour)+" par heure":""}.</div></div></div>`:""}
@@ -697,29 +710,29 @@ VIEWS.evenements=()=>{
 };
 function eventSheet(id){
   const e=get("events",id);if(!e)return;const s=eventStats(e);
-  const by={};s.list.forEach(t=>t.items.forEach(i=>{by[i.n]=(by[i.n]||0)+i.q}));
-  const hrs={};s.list.forEach(t=>{const h=new Date(t.ts).getHours();hrs[h]=(hrs[h]||0)+t.total});
+  const by={};s.list.filter(t=>!t.manual).forEach(t=>t.items.forEach(i=>{by[i.n]=(by[i.n]||0)+i.q}));
+  const hrs={};s.list.filter(t=>!t.manual).forEach(t=>{const h=new Date(t.ts).getHours();hrs[h]=(hrs[h]||0)+t.total});
   const hk=Object.keys(hrs).map(Number).sort((a,b)=>a-b);
   const peak=hk.sort((a,b)=>hrs[b]-hrs[a])[0];
   const linked=all("expenses").filter(x=>x.eventId===e.id);
-  openSheet(`<div class="sheet-head"><div><h2>${esc(e.name)}</h2><div class="small muted">${fDay(e.date)}${e.place?" · "+esc(e.place):""}${e.hours?" · "+num(e.hours,1)+" h":""}</div></div><button class="x" data-act="close" aria-label="Fermer">×</button></div>
+  openSheet(`<div class="sheet-head"><div><h2>${esc(e.name)}</h2><div class="small muted">${evWhen(e)}${e.place?" · "+esc(e.place):""}${e.hours?" · "+num(e.hours,1)+" h":""}</div></div><button class="x" data-act="close" aria-label="Fermer">×</button></div>
   <div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr))">
     <div class="kpi hero"><span class="label">Bénéfice net</span><b>${chf(s.profit)}</b><small>${s.rev?pct(s.profit/s.rev)+" des ventes":"pas encore de vente"}</small></div>
     <div class="kpi"><span class="label">Ventes</span><b>${chf(s.rev)}</b><small>${s.n} tickets · ${num(s.cups)} boissons</small></div>
   </div>
   <div class="tbl-wrap" style="margin-top:12px"><table><tbody>
-    <tr><td>Chiffre d’affaires</td><td class="n">${chf(s.rev)}</td></tr>
+    <tr><td>Chiffre d’affaires${s.list.some(t=>t.manual)?` <span class="tiny muted">(dont ${chf(sum(s.list.filter(t=>t.manual),t=>t.total))} saisis à la main)</span>`:""}</td><td class="n">${chf(s.rev)}</td></tr>
     <tr><td>Coût des ingrédients et emballages</td><td class="n">− ${chf(s.cogs)}</td></tr>
     ${s.vat?`<tr><td>TVA sur les ventes (${num(CFG.vatRate,1)} %)</td><td class="n">− ${chf(s.vat)}</td></tr>`:""}
     <tr><td>Commissions SumUp et TWINT (estimées)</td><td class="n">− ${chf(s.fees)}</td></tr>
-    ${(e.costs||[]).map(c=>`<tr><td>${esc(c.l)}</td><td class="n">− ${chf(c.a)}</td></tr>`).join("")}
+    ${(e.costs||[]).map(c=>`<tr><td>${esc(costLabel(c))}</td><td class="n">− ${chf(costAmount(c,s.rev))}</td></tr>`).join("")}
     ${linked.map(x=>`<tr><td>${esc(x.label||x.cat)}</td><td class="n">− ${chf(x.amount)}</td></tr>`).join("")}
     <tr class="total"><td>Bénéfice net</td><td class="n" style="color:${s.profit<0?"var(--bad)":"var(--good)"}">${chf(s.profit)}</td></tr>
   </tbody></table></div>
   ${s.n?`<div class="row small" style="margin-top:10px;gap:16px"><span>Ticket moyen <b>${chf(s.avg)}</b></span>${s.perHour?`<span>Par heure <b>${chf(s.perHour)}</b></span>`:""}${peak!==undefined?`<span>Heure de pointe <b>${peak} h – ${peak+1} h</b></span>`:""}</div>
   <div class="label" style="margin-top:14px">Boissons vendues</div><div class="row small" style="margin-top:6px">${Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([n,q])=>`<span class="pill neutral">${q}× ${esc(n)}</span>`).join("")}</div>`:""}
   ${e.note?`<p class="small muted">${esc(e.note)}</p>`:""}
-  <div class="formfoot"><button class="btn" data-act="editEvent" data-id="${e.id}">Modifier</button>${e.date>=addDays(today(),-3)?`<button class="btn primary" data-act="sellAt" data-id="${e.id}">${ic("cash")}Vendre ici</button>`:""}</div>`);
+  <div class="formfoot"><button class="btn" data-act="editEvent" data-id="${e.id}">Modifier</button>${evLast(e)>=addDays(today(),-3)?`<button class="btn primary" data-act="sellAt" data-id="${e.id}">${ic("cash")}Vendre ici</button>`:""}</div>`);
 }
 
 /* ---------- Matériel ---------- */
@@ -745,8 +758,8 @@ VIEWS.compta=()=>{
 function journal(){
   return memo("journal",()=>{
     const out=expenseEntries().map(e=>({...e,type:"Dépense"}));
-    const days={};tickets().forEach(t=>{const d=t.ts.slice(0,10),k=d+"|"+(t.eventId||"");const x=days[k]=days[k]||{date:d,eventId:t.eventId,amount:0,n:0,pay:{}};x.amount+=t.total;x.n++;x.pay[t.pay]=(x.pay[t.pay]||0)+t.total});
-    Object.values(days).forEach(x=>{const e=get("events",x.eventId);out.push({type:"Recette",date:x.date,cat:"Ventes boissons",label:(e?e.name:"Ventes hors manifestation")+" · "+x.n+" tickets",amount:x.amount,pay:x.pay})});
+    const days={};tickets().forEach(t=>{const d=t.ts.slice(0,10),k=d+"|"+(t.eventId||"");const x=days[k]=days[k]||{date:d,eventId:t.eventId,amount:0,n:0,pay:{}};x.amount+=t.total;x.n++;if(t.manual)x.man=(x.man||0)+1;x.pay[t.pay]=(x.pay[t.pay]||0)+t.total});
+    Object.values(days).forEach(x=>{const e=get("events",x.eventId);out.push({type:"Recette",date:x.date,cat:"Ventes boissons",label:(e?e.name:"Ventes hors manifestation")+((x.man||0)===x.n?" · ventes saisies":" · "+(x.n-(x.man||0))+" ticket"+(x.n-(x.man||0)>1?"s":"")+(x.man?" + ventes saisies":"")),amount:x.amount,pay:x.pay})});
     return out.sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:a.type<b.type?1:-1)});
 }
 function comptaBilan(){
@@ -776,9 +789,8 @@ function comptaJournal(){
   const m=UI.journalMonth||ms[0]||today().slice(0,7);
   const J=journal().filter(j=>j.date.startsWith(m));
   return `<div class="row" style="margin-bottom:12px"><label for="monthSel" class="label">Mois</label><select id="monthSel" style="width:auto;text-transform:capitalize" data-change="jmonth">${(ms.length?ms:[m]).map(v=>`<option value="${v}" ${v===m?"selected":""}>${fMonth(v)}</option>`).join("")}</select></div>
-  <div class="card">${J.length?`<div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Libellé</th><th>Catégorie</th><th class="n">Recette</th><th class="n">Dépense</th></tr></thead><tbody>
-  ${J.map(j=>`<tr><td class="num" style="white-space:nowrap">${fDate(j.date)}</td><td>${esc(j.label)}</td><td><span class="pill ${j.type==="Recette"?"good":"neutral"}">${esc(j.cat)}</span></td><td class="n">${j.type==="Recette"?chf(j.amount):""}</td><td class="n">${j.type==="Dépense"?chf(j.amount):""}</td></tr>`).join("")}
-  <tr class="total"><td colspan="3">Total du mois</td><td class="n">${chf(sum(J.filter(j=>j.type==="Recette"),j=>j.amount))}</td><td class="n">${chf(sum(J.filter(j=>j.type==="Dépense"),j=>j.amount))}</td></tr></tbody></table></div>`:emptyBox("bunny","Rien ce mois-ci","Les ventes, achats et dépenses apparaissent ici automatiquement.")}</div>`;
+  <div class="card">${J.length?`<div class="list">${J.map(j=>`<div class="item"><div class="main"><b class="small" style="white-space:normal">${esc(j.label)}</b><span class="tiny muted">${fDate(j.date)} · ${esc(j.cat)}</span></div><b class="num" style="color:${j.type==="Recette"?"var(--good)":"inherit"}">${j.type==="Recette"?"+ ":"− "}${chf(j.amount)}</b></div>`).join("")}</div>
+  <div class="calc" style="margin-top:10px"><span>Recettes du mois <b class="num">${chf(sum(J.filter(j=>j.type==="Recette"),j=>j.amount))}</b></span><span>Dépenses <b class="num">${chf(sum(J.filter(j=>j.type==="Dépense"),j=>j.amount))}</b></span></div>`:emptyBox("bunny","Rien ce mois-ci","Les ventes, achats et dépenses apparaissent ici automatiquement.")}</div>`;
 }
 function comptaDepenses(){
   const xs=all("expenses").sort((a,b)=>a.date<b.date?1:-1);
@@ -877,19 +889,26 @@ function recipeLines(){return window.__recipe.map((l,i)=>{const u=l.p&&get("prod
 function recipeCalc(price){const c=recipeCost(window.__recipe);price=ht(price);return `<span>Coût matière <b class="num">${chf(c)}</b></span><span>Marge${CFG.vat?" HT":""} <b class="num">${chf(price-c)}</b> ${marginPill(price?(price-c)/price:NaN)}</span>`}
 function eventFormSheet(id){
   const e=id?get("events",id):{date:today(),costs:[{l:"Emplacement",a:""}]};
-  window.__costs=(e.costs||[]).map(c=>({...c}));
+  window.__costs=(e.costs||[]).map(c=>({...c}));window.__dates=evDates(e).length?evDates(e):[today()];window.__esales=(e.sales||[]).map(x=>({...x}));
   openSheet(`<div class="sheet-head"><h2>${id?"Modifier la manifestation":"Nouvelle manifestation"}</h2><button class="x" data-act="close" aria-label="Fermer">×</button></div>
   <form data-submit="event" data-id="${id||""}"><div class="fields">
    ${field("eName","Nom",`<input id="eName" name="name" required value="${esc(e.name||"")}" placeholder="ex. Marché de Noël">`,true)}
-   ${field("eDate","Date",`<input id="eDate" name="date" type="date" required value="${e.date}">`)}
-   ${field("eHours","Durée de vente (heures)",`<input id="eHours" name="hours" type="number" step="0.5" min="0" value="${e.hours??""}">`)}
+   <div class="f wide"><span>Dates</span><div class="lines" id="eDates">${dateLines()}</div><div><button type="button" class="btn sm" data-act="addDLine">${ic("plus")}Ajouter un jour</button></div></div>
+   ${field("eHours","Durée de vente totale (heures)",`<input id="eHours" name="hours" type="number" step="0.5" min="0" value="${e.hours??""}">`)}
    ${field("ePlace","Lieu",`<input id="ePlace" name="place" value="${esc(e.place||"")}" placeholder="ex. Montreux">`,true)}
   </div><div class="label" style="margin:16px 0 6px">Frais de la manifestation</div><div class="lines" id="eCosts">${costLines()}</div>
   <button type="button" class="btn sm" style="margin-top:8px" data-act="addCLine">${ic("plus")}Ajouter un frais</button>
+  <div class="label" style="margin:18px 0 4px">Résultat des ventes saisi à la main</div>
+  <p class="tiny muted" style="margin:0 0 8px">Pour les ventes faites sans la caisse de l’application, par exemple le total SumUp de la journée. Elles comptent dans le bénéfice de la manifestation et dans la comptabilité. Les ventes faites avec la caisse sont déjà comptées : ne les saisissez pas une deuxième fois.</p>
+  <div class="lines" id="eSales">${saleLines()}</div>
+  <button type="button" class="btn sm" style="margin-top:8px" data-act="addSLine">${ic("plus")}Ajouter un résultat</button>
   ${field("eNote","Notes",`<textarea id="eNote" name="note" placeholder="Météo, affluence, idées pour la prochaine fois…">${esc(e.note||"")}</textarea>`)}
   <div class="formfoot">${id?`<button type="button" class="btn danger" data-act="delEvent" data-id="${id}" data-confirm="Supprimer la manifestation ?">Supprimer</button>`:"<span></span>"}<button class="btn primary">Enregistrer</button></div></form>`);
 }
-function costLines(){return window.__costs.map((c,i)=>`<div class="line l3"><input aria-label="Frais" list="costNames" value="${esc(c.l||"")}" placeholder="ex. Emplacement" data-cline="${i}" data-k="l"><input aria-label="Montant CHF" type="number" step="0.05" min="0" inputmode="decimal" placeholder="CHF" value="${c.a??""}" data-cline="${i}" data-k="a"><button type="button" class="x" data-act="delCLine" data-i="${i}" aria-label="Retirer">×</button></div>`).join("")+`<datalist id="costNames"><option value="Emplacement"><option value="Transport"><option value="Électricité"><option value="Parking"><option value="Aide / personnel"><option value="Glace"></datalist>`}
+function dateLines(){return window.__dates.map((d,i)=>`<div class="line l3d"><input aria-label="Jour ${i+1}" type="date" required value="${esc(d||"")}" data-dline="${i}">${window.__dates.length>1?`<button type="button" class="x" data-act="delDLine" data-i="${i}" aria-label="Retirer ce jour">×</button>`:"<span></span>"}</div>`).join("")}
+const PAYS=["Mixte","Carte","TWINT","Espèces"];
+function saleLines(){return window.__esales.length?window.__esales.map((x,i)=>`<div class="line l4s"><input aria-label="Jour" type="date" value="${esc(x.d||window.__dates[0]||"")}" data-sline="${i}" data-k="d"><input aria-label="Montant encaissé CHF" type="number" step="0.05" min="0" inputmode="decimal" placeholder="CHF" value="${x.a??""}" data-sline="${i}" data-k="a"><select aria-label="Paiement" data-sline="${i}" data-k="p">${PAYS.map(p=>opt(p,p,x.p||"Mixte")).join("")}</select><input aria-label="Nombre de boissons" type="number" step="1" min="0" inputmode="numeric" placeholder="Nb boissons (facultatif)" value="${x.q??""}" data-sline="${i}" data-k="q"><button type="button" class="x" data-act="delSLine" data-i="${i}" aria-label="Retirer">×</button></div>`).join(""):`<p class="tiny muted" style="margin:0">Aucun résultat saisi.</p>`}
+function costLines(){return window.__costs.map((c,i)=>`<div class="line l4c"><input aria-label="Frais" list="costNames" value="${esc(c.l||"")}" placeholder="ex. Emplacement" data-cline="${i}" data-k="l"><input aria-label="Montant" type="number" step="0.05" min="0" inputmode="decimal" placeholder="${c.u==="%"?"%":"CHF"}" value="${c.a??""}" data-cline="${i}" data-k="a"><select aria-label="Unité" data-cline="${i}" data-k="u">${opt("CHF","CHF",c.u||"CHF")}${opt("%","% du CA",c.u)}</select><button type="button" class="x" data-act="delCLine" data-i="${i}" aria-label="Retirer">×</button></div>`).join("")+`<datalist id="costNames"><option value="Emplacement"><option value="Transport"><option value="Électricité"><option value="Parking"><option value="Aide / personnel"><option value="Glace"><option value="Commission sur le chiffre d’affaires"><option value="Consigne des verres"></datalist>`}
 function equipSheet(id){
   const m=id?get("equipment",id):{qty:1,state:"Bon état",date:today(),compta:true};
   openSheet(`<div class="sheet-head"><h2>${id?esc(m.name):"Nouveau matériel"}</h2><button class="x" data-act="close" aria-label="Fermer">×</button></div>
@@ -944,6 +963,10 @@ const ACT={
   delMenu:el=>{del("menu",el.dataset.id);closeSheet()},
   newEvent:()=>eventFormSheet(),editEvent:el=>eventFormSheet(el.dataset.id),openEvent:el=>eventSheet(el.dataset.id),
   addCLine:()=>{window.__costs.push({});$("#eCosts").innerHTML=costLines()},
+  addDLine:()=>{const l=window.__dates[window.__dates.length-1];window.__dates.push(l?addDays(l,1):today());$("#eDates").innerHTML=dateLines()},
+  delDLine:el=>{window.__dates.splice(+el.dataset.i,1);$("#eDates").innerHTML=dateLines()},
+  addSLine:()=>{window.__esales.push({d:window.__dates[window.__esales.length]||window.__dates[0],p:"Mixte"});$("#eSales").innerHTML=saleLines()},
+  delSLine:el=>{window.__esales.splice(+el.dataset.i,1);$("#eSales").innerHTML=saleLines()},
   delCLine:el=>{window.__costs.splice(+el.dataset.i,1);$("#eCosts").innerHTML=costLines()},
   delEvent:el=>{del("events",el.dataset.id);closeSheet()},
   sellAt:el=>{ls("kojitea-event",el.dataset.id);closeSheet();location.hash="caisse"},
@@ -983,10 +1006,14 @@ document.addEventListener("input",e=>{
   if(t.dataset.line!==undefined){window.__lines[+t.dataset.line][t.dataset.k]=t.dataset.k==="price"||t.dataset.k==="qty"?N(t.value):t.value;$("#puTotal").textContent=chf(sum(window.__lines,l=>l.price))}
   if(t.dataset.rline!==undefined){window.__recipe[+t.dataset.rline][t.dataset.k]=t.dataset.k==="q"?N(t.value):t.value;$("#mCalc").innerHTML=recipeCalc($("#mPrice").value)}
   if(t.dataset.cline!==undefined){window.__costs[+t.dataset.cline][t.dataset.k]=t.dataset.k==="a"?N(t.value):t.value}
+  if(t.dataset.dline!==undefined){window.__dates[+t.dataset.dline]=t.value}
+  if(t.dataset.sline!==undefined){window.__esales[+t.dataset.sline][t.dataset.k]=t.dataset.k==="a"||t.dataset.k==="q"?N(t.value):t.value}
   if(t.dataset.input==="recalc")$("#mCalc").innerHTML=recipeCalc(t.value);
 });
 document.addEventListener("change",e=>{
   const t=e.target;
+  if(t.dataset.cline!==undefined&&t.dataset.k==="u"){window.__costs[+t.dataset.cline].u=t.value;$("#eCosts").innerHTML=costLines()}
+  if(t.dataset.sline!==undefined&&t.dataset.k==="p"){window.__esales[+t.dataset.sline].p=t.value}
   if(t.dataset.line!==undefined&&t.dataset.k==="p"){window.__lines[+t.dataset.line].p=t.value;$("#puLines").innerHTML=purchaseLines()}
   if(t.dataset.rline!==undefined&&t.dataset.k==="p"){window.__recipe[+t.dataset.rline].p=t.value;$("#mLines").innerHTML=recipeLines();$("#mCalc").innerHTML=recipeCalc($("#mPrice").value)}
   const c=t.dataset.change;
@@ -1031,9 +1058,11 @@ document.addEventListener("submit",e=>{
     closeSheet();toast("Carte mise à jour.","bear");
   }
   if(kind==="event"){
-    const costs=window.__costs.filter(c=>(c.l||"").trim()&&N(c.a)>0).map(c=>({l:c.l.trim(),a:+c.a}));
-    const ev=put("events",{...(id?get("events",id):{}),id,name:d.name.trim(),date:d.date,hours:N(d.hours),place:d.place.trim(),note:d.note,costs,demo:false});
-    closeSheet();toast("Manifestation enregistrée.","bear");if(!id&&ev.date===today())ls("kojitea-event",ev.id);
+    const costs=window.__costs.filter(c=>(c.l||"").trim()&&N(c.a)>0).map(c=>({l:c.l.trim(),a:+c.a,u:c.u==="%"?"%":"CHF"}));
+    const dates=[...new Set(window.__dates.filter(Boolean))].sort();if(!dates.length){toast("Indiquez au moins une date.","bunny");return}
+    const sales=window.__esales.filter(x=>N(x.a)>0).map(x=>({d:x.d||dates[0],a:+x.a,p:x.p||"Mixte",q:N(x.q)||0}));
+    const ev=put("events",{...(id?get("events",id):{}),id,name:d.name.trim(),date:dates[0],dates,sales,hours:N(d.hours),place:d.place.trim(),note:d.note,costs,demo:false});
+    closeSheet();toast("Manifestation enregistrée.","bear");if(!id&&dates.includes(today()))ls("kojitea-event",ev.id);
   }
   if(kind==="equip"){put("equipment",{...(id?get("equipment",id):{}),id,name:d.name.trim(),cat:d.cat.trim()||"Autre",qty:N(d.qty)||1,price:N(d.price),date:d.date,state:d.state,place:d.place.trim(),note:d.note,compta:!!d.compta,demo:false});closeSheet();toast("Matériel enregistré.","bear")}
   if(kind==="expense"){put("expenses",{...(id?get("expenses",id):{}),id,label:d.label.trim(),amount:N(d.amount)||0,date:d.date,cat:d.cat,eventId:d.eventId,demo:false});closeSheet();toast("Dépense enregistrée.","bear")}
