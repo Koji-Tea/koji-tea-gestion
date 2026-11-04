@@ -471,6 +471,31 @@ function render(){
   $("#main").innerHTML=demoBanner()+v();
   if(aid){const el=document.getElementById(aid);if(el&&el!==a&&!$("#sheetRoot").contains(el)){el.focus();try{el.setSelectionRange(sel,sel)}catch(e){}}}
 }
+/* ---------- Installation sur le téléphone ---------- */
+let installEvt=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;scheduleRender()});
+window.addEventListener("appinstalled",()=>{installEvt=null;ls("kojitea-installed","1");toast("Koji Tea est installée sur l’écran d’accueil !","bear");scheduleRender()});
+const isInstalled=()=>(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true||ls("kojitea-installed")==="1";
+const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+function installBanner(){
+  if(window.claude||isInstalled()||ls("kojitea-install-later")===today())return "";
+  return `<div class="banner" style="background:var(--surface-2)"><img alt="" src="${IMG.logo}" style="width:44px;height:44px;object-fit:contain"><div class="grow"><b>Installer Koji Tea sur ce téléphone</b><div class="small muted">Une icône sur l’écran d’accueil, ouverture en plein écran, et l’app reste disponible sans réseau.</div></div><div class="row"><button class="btn primary sm" data-act="install">${ic("down")}Installer l’app</button><button class="btn ghost sm" data-act="installLater">Plus tard</button></div></div>`;
+}
+function installHelp(){
+  const ios=isIOS(),share='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M6 11H5v10h14V11h-1"/></svg>';
+  openSheet(`<div class="sheet-head"><h2>Installer Koji Tea</h2><button class="x" data-act="close" aria-label="Fermer">×</button></div>
+  ${ios?`<ol class="stack" style="gap:12px;padding-left:20px;margin:0">
+    <li>Ouvrez cette page dans <b>Safari</b> (pas dans une autre app).</li>
+    <li>Touchez le bouton <b>Partager</b> ${share} en bas de l’écran.</li>
+    <li>Faites défiler et choisissez <b>Sur l’écran d’accueil</b>.</li>
+    <li>Touchez <b>Ajouter</b> en haut à droite. L’icône Koji Tea apparaît sur l’écran d’accueil.</li></ol>`
+  :`<ol class="stack" style="gap:12px;padding-left:20px;margin:0">
+    <li>Ouvrez cette page dans <b>Chrome</b> ou <b>Samsung Internet</b>.</li>
+    <li>Touchez le menu <b>⋮</b> (ou <b>☰</b>) en haut ou en bas à droite.</li>
+    <li>Choisissez <b>Installer l’application</b> ou <b>Ajouter à l’écran d’accueil</b>.</li>
+    <li>Confirmez avec <b>Installer</b>. L’icône Koji Tea apparaît sur l’écran d’accueil.</li></ol>`}
+  <div class="formfoot"><span></span><button class="btn primary" data-act="close">J’ai compris</button></div>`);
+}
 function demoBanner(){
   if(!all("menu").length&&!all("products").length&&!all("sales").length&&route==="accueil")return `<div class="banner"><img alt="" src="${IMG.bear}"><div class="grow"><b>Bienvenue chez Koji Tea !</b><div class="small muted">Commencez par la carte (vos boissons et leurs recettes) et le stock. Vous pouvez aussi charger des exemples pour découvrir l’application.</div></div><a class="btn primary sm" href="#carte">Créer la carte</a><button class="btn sm" data-act="loadDemo">Voir des exemples</button></div>`;
   if(!hasDemo()||route==="caisse")return "";
@@ -519,7 +544,7 @@ VIEWS.accueil=()=>{
   const next=all("events").filter(e=>evLast(e)>=today()).sort((a,b)=>a.date<b.date?-1:1)[0];
   const evs=all("events").filter(e=>e.date<=today()&&inRange(e.date,from,to)).map(e=>({e,s:eventStats(e)})).sort((a,b)=>b.s.profit-a.s.profit);
   const hello=new Date().getHours()<12?"Bonjour":new Date().getHours()<18?"Bon après-midi":"Bonsoir";
-  return head(hello+" Julie",`Voici où en est Koji Tea.`,`<div class="seg" role="tablist">${PERIODS.map(([k,l])=>`<button class="${UI.period===k?"on":""}" data-act="period" data-v="${k}">${l}</button>`).join("")}</div>`)+
+  return installBanner()+head(hello+" Julie",`Voici où en est Koji Tea.`,`<div class="seg" role="tablist">${PERIODS.map(([k,l])=>`<button class="${UI.period===k?"on":""}" data-act="period" data-v="${k}">${l}</button>`).join("")}</div>`)+
   `<div class="stack">
   <div class="kpis">
     <div class="kpi hero"><span class="label">Chiffre d’affaires</span><b>${chf(s.rev)}</b><small>${s.n} ventes</small></div>
@@ -950,6 +975,8 @@ async function saveFile(filename,data){
   openSheet(`<div class="sheet-head"><h2>${esc(filename)}</h2><button class="x" data-act="close" aria-label="Fermer">×</button></div><p class="small muted">Le téléchargement direct n’est pas disponible ici. Copiez le contenu et collez-le dans un fichier.</p><textarea id="dlText" readonly style="min-height:240px;font-family:ui-monospace,monospace;font-size:.78rem">${esc(data)}</textarea><div class="formfoot"><span></span><button class="btn primary" data-act="copyDl">Copier</button></div>`);
 }
 ACT.logout=()=>{firebase.auth().signOut().then(()=>location.reload())};
+ACT.install=async()=>{if(installEvt){try{installEvt.prompt();const r=await installEvt.userChoice;installEvt=null;if(r&&r.outcome==="accepted")ls("kojitea-installed","1");scheduleRender()}catch(e){installHelp()}}else installHelp()};
+ACT.installLater=()=>{ls("kojitea-install-later",today());render()};
 ACT.copyDl=()=>{const t=$("#dlText");navigator.clipboard?.writeText(t.value).then(()=>toast("Copié.","bear"),()=>{t.select()})};
 
 document.addEventListener("click",e=>{
