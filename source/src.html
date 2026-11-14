@@ -221,6 +221,55 @@ input[type=checkbox]{width:22px;height:22px;min-height:0;accent-color:var(--deep
 .morelist{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .morelist a{display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:14px;background:var(--surface-2);text-decoration:none;color:var(--ink);font-weight:800}
 .morelist svg{width:26px;height:26px;color:var(--deep)}
+
+/* Pièces jointes */
+.vh{position:absolute!important;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+.atts{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
+.att{position:relative;display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:6px;cursor:pointer;min-width:0}
+.att .th{aspect-ratio:1;border-radius:8px;background:var(--surface-2);display:grid;place-items:center;overflow:hidden;color:var(--muted)}
+.att .th img{width:100%;height:100%;object-fit:cover;display:block}
+.att .th svg{width:34px;height:34px}
+.att > span{font-size:.74rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.att .rm{position:absolute;top:-7px;right:-7px;min-width:28px;height:28px;border-radius:999px;border:2px solid var(--surface);background:var(--ink);color:var(--bg);font-weight:800;cursor:pointer;padding:0 7px;font-size:.8rem}
+.att .rm.armed{background:var(--bad);color:#fff}
+.clip{display:inline-flex;align-items:center;gap:2px;vertical-align:-2px}.clip svg{width:13px;height:13px}
+.vscrim{position:fixed;inset:0;z-index:55;background:rgba(10,14,6,.72);display:flex;align-items:center;justify-content:center;padding:max(12px,env(safe-area-inset-top,0px)) 12px max(12px,env(safe-area-inset-bottom,0px))}
+.viewer{background:var(--surface);border-radius:18px;width:100%;max-width:920px;max-height:100%;display:flex;flex-direction:column;padding:14px;gap:10px;min-height:0}
+.viewer .vhead{display:flex;align-items:center;gap:10px}
+.viewer .vhead b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.viewer .vbody{flex:1;min-height:0;overflow:auto;display:grid;place-items:center;background:var(--surface-2);border-radius:12px}
+.viewer .vbody img{max-width:100%;max-height:72vh;object-fit:contain;display:block}
+.viewer .vbody iframe{width:100%;height:72vh;border:0;background:#fff;border-radius:12px}
+.viewer .vbody .empty svg{width:56px;height:56px;color:var(--deep)}
+.viewer .vfoot{justify-content:flex-end}
+
+/* Recettes */
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.rcard{display:flex;flex-direction:column;border-radius:var(--r);overflow:hidden;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;min-width:0}
+.rcard:hover{border-color:var(--matcha)}
+.rcard .ph{aspect-ratio:4/3;background:var(--surface-2);display:grid;place-items:center;overflow:hidden}
+.rcard .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.rcard .ph img.ms{width:70px;height:70px;object-fit:contain}
+.rcard .bd{padding:10px 12px}
+.rcard .bd b{font-family:var(--f-display);font-weight:600;display:block}
+.rcover{width:100%;max-height:260px;object-fit:cover;border-radius:14px;display:block;margin-bottom:12px;background:var(--surface-2)}
+.ing{display:flex;gap:12px;padding:8px 0;border-top:1px dashed var(--line)}
+.ing:first-child{border-top:0}
+.ing b{min-width:96px;flex:none;font-variant-numeric:tabular-nums;color:var(--deep)}
+.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:10px}
+.steps li{counter-increment:s;display:flex;gap:10px}
+.steps li::before{content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;background:var(--matcha);color:#fff;font-weight:800;display:grid;place-items:center;font-size:.85rem}
+.line.l4i{grid-template-columns:minmax(0,2fr) minmax(0,.8fr) minmax(0,1fr) 40px}
+@media (max-width:520px){.line.l4i{grid-template-columns:1fr 1fr 40px;padding-bottom:8px;border-bottom:1px dashed var(--line)}.line.l4i input[data-k=n]{grid-column:1/3}.line.l4i .x{grid-row:1;grid-column:3}}
+.scaler{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-start}
+.scaler input{width:84px;text-align:center}
+
+/* Fonds de caisse */
+.denoms{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.denoms label{display:flex;align-items:center;gap:6px;font-weight:700;font-size:.86rem}
+.denoms label span{min-width:52px;text-align:right}
+details.calc{display:block}
+details.calc summary{cursor:pointer;font-weight:700}
 </style>
 
 <div class="app">
@@ -232,6 +281,7 @@ input[type=checkbox]{width:22px;height:22px;min-height:0;accent-color:var(--deep
   <nav class="tabbar" id="tabbar"></nav>
 </div>
 <div id="sheetRoot"></div>
+<div id="viewerRoot"></div>
 <div id="toastRoot"></div>
 
 <script>
@@ -273,12 +323,20 @@ const ICON={
  more:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
  plus:'<path d="M12 5v14M5 12h14"/>',
  cart:'<path d="M3 4h2.5l2.2 11h10.6L20.5 7H6.5"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
- down:'<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>'
+ down:'<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',
+ chef:'<path d="M7 17.5h10V21H7z"/><path d="M7 17.5v-4.2A4 4 0 0 1 7.6 5.5a4.6 4.6 0 0 1 8.8 0 4 4 0 0 1 .6 7.8v4.2"/>',
+ clip:'<path d="M20 11.5 12.2 19.3a5 5 0 0 1-7.1-7.1l8.1-8.1a3.4 3.4 0 0 1 4.8 4.8L10 16.9a1.8 1.8 0 0 1-2.6-2.6l7.2-7.2"/>',
+ camera:'<path d="M4 8h3.2l1.6-2.5h6.4L16.8 8H20v11H4z"/><circle cx="12" cy="13.2" r="3.4"/>',
+ share:'<path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M6 11H5v10h14V11h-1"/>',
+ file:'<path d="M6 3h8.5L19 7.5V21H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 16.5h6"/>',
+ image:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="m4 18 5.5-5 4 3.5 2.5-2 4 3.5"/>',
+ open:'<path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v6H4V6h6"/>',
+ coins:'<ellipse cx="9" cy="7" rx="5.5" ry="2.5"/><path d="M3.5 7v4c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5V7"/><path d="M9.5 16.3c.9 1.2 3 2.2 5.5 2.2 3 0 5.5-1.1 5.5-2.5v-4c0-1.2-1.9-2.2-4.4-2.4"/>'
 };
 const ic=(n,extra="")=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${ICON[n]}</svg>`;
 
 /* ---------- Données ---------- */
-const COLS=["products","lots","moves","purchases","menu","events","sales","equipment","expenses"];
+const COLS=["products","lots","moves","purchases","menu","events","sales","equipment","expenses","recipes","cashcounts"];
 let S=Object.fromEntries(COLS.map(c=>[c,new Map()]));
 let CFG={vat:true,vatRate:2.6,cardFee:1.5,twintFee:1.3};
 let MODE="loading",DB=null,READONLY=false,LOADED=new Set();
@@ -392,7 +450,7 @@ const hasDemo=()=>COLS.some(c=>all(c).some(o=>o.demo));
 function makeDemo(base){
   let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
   const D=n=>{const d=new Date(base+"T12:00:00");d.setDate(d.getDate()+n);return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
-  const out={products:[],lots:[],moves:[],purchases:[],menu:[],events:[],sales:[],equipment:[],expenses:[]};
+  const out={products:[],lots:[],moves:[],purchases:[],menu:[],events:[],sales:[],equipment:[],expenses:[],recipes:[],cashcounts:[]};
   const P={};const prod=(k,name,cat,unit,cost,min)=>{P[k]="dp-"+k;out.products.push({id:P[k],name,cat,unit,cost,min,demo:true})};
   prod("noir","Thé noir Assam","Thé","g",.045,200);prod("vert","Thé vert jasmin","Thé","g",.05,300);prod("oolong","Thé Oolong","Thé","g",.06,300);
   prod("matcha","Matcha culinaire","Thé","g",.24,200);prod("lait","Lait entier UHT","Lait","ml",.0016,3000);prod("avoine","Boisson avoine","Lait","ml",.0028,4000);
@@ -436,19 +494,26 @@ function makeDemo(base){
   eq("Glacière 50 L","Froid",2,90,-55,"À réparer","Dépôt");eq("Tente pliante 3×3 m","Stand",1,350,-55,"Bon état","Dépôt");
   eq("Terminal de paiement","Caisse",1,79,-50,"Bon état","Stand");eq("Banderole Koji Tea","Stand",1,95,-50,"Bon état","Dépôt");
   const ex=(d,cat,label,amount,eventId)=>out.expenses.push({id:"dx-"+out.expenses.length,date:D(d),cat,label,amount,eventId:eventId||"",demo:true});
+  out.recipes.push({id:"dr-sirop",name:"Sirop de sucre brun maison",cat:"Sirops & bases",time:"20 min",yq:1,yu:"litre",demo:true,
+    ings:[{n:"Sucre de canne brun (muscovado)",q:600,u:"g"},{n:"Eau",q:4,u:"dl"},{n:"Gousse de vanille",q:1,u:"pce"},{n:"Sel",q:null,u:"pincee"}],
+    steps:"Verser l’eau et le sucre dans une casserole.\nChauffer à feu moyen en remuant jusqu’à ce que le sucre soit fondu.\nAjouter la vanille fendue et le sel, laisser frémir 8 à 10 minutes jusqu’à consistance sirupeuse.\nLaisser refroidir, filtrer et mettre en bouteille.",note:"Se garde 3 semaines au frigo dans une bouteille propre."});
+  out.recipes.push({id:"dr-perles",name:"Perles de tapioca cuites",cat:"Toppings",time:"45 min",yq:20,yu:"boissons",demo:true,
+    ings:[{n:"Perles de tapioca",q:1.2,u:"kg"},{n:"Eau",q:8,u:"l"},{n:"Sirop de sucre brun",q:3,u:"dl"}],
+    steps:"Porter l’eau à ébullition à gros bouillons.\nVerser les perles et remuer pour qu’elles ne collent pas.\nCuire 25 minutes à couvert, puis laisser reposer 20 minutes hors du feu.\nRincer à l’eau froide et mélanger avec le sirop.",note:"À utiliser dans les 4 heures. Ne pas mettre au frigo : les perles durcissent."});
+  out.cashcounts.push({id:"dk-0",ts:D(-10)+"T08:30:00.000Z",date:D(-10),kind:"Comptage",amount:200,note:"Fond de départ",demo:true});
   ex(-58,"Assurances & taxes","Assurance RC entreprise",280);ex(-40,"Marketing","Flyers et autocollants",90);ex(-38,"Énergie & gaz","Cartouches de gaz",24,e1);ex(-20,"Marketing","Stickers mascottes",45);ex(-10,"Énergie & gaz","Glace pilée",18,e3);
   return out;
 }
 /*DEMO-END*/
 function loadDemo(){const d=makeDemo(today());COLS.forEach(c=>d[c].forEach(o=>put(c,o)));toast("Exemples chargés. Explorez sans crainte !","bear")}
-function clearDemo(){COLS.forEach(c=>all(c).filter(o=>o.demo).forEach(o=>del(c,o.id)));toast("Exemples effacés. À vous de jouer !","bear")}
+function clearDemo(){COLS.forEach(c=>all(c).filter(o=>o.demo).forEach(o=>{delFiles(o);del(c,o.id)}));toast("Exemples effacés. À vous de jouer !","bear")}
 
 /* ---------- Navigation ---------- */
-const NAV=[["accueil","Accueil","home"],["caisse","Caisse","cash"],["stock","Stock","box"],["carte","Carte & marges","cup"],["evenements","Manifestations","tent"],["materiel","Matériel","tool"],["compta","Comptabilité","book"],["reglages","Réglages","gear"]];
+const NAV=[["accueil","Accueil","home"],["caisse","Caisse","cash"],["stock","Stock","box"],["carte","Carte & marges","cup"],["recettes","Recettes","chef"],["evenements","Manifestations","tent"],["materiel","Matériel","tool"],["compta","Comptabilité","book"],["reglages","Réglages","gear"]];
 const TAB=["accueil","caisse","stock","evenements"];
 let route="accueil";
 const VIEWS={};
-const UI={stockTab:"produits",comptaTab:"bilan",period:"mois",year:String(new Date().getFullYear()),cart:[],q:"",evTab:"avenir",journalMonth:""};
+const UI={rq:"",stockTab:"produits",comptaTab:"bilan",period:"mois",year:String(new Date().getFullYear()),cart:[],q:"",evTab:"avenir",journalMonth:""};
 function nav(){
   route=(location.hash||"").replace("#","")||"accueil";if(route!=="plus"&&!NAV.find(n=>n[0]===route))route="accueil";
   const lab=(NAV.find(n=>n[0]===route)||[0,"Plus"])[1];
@@ -468,7 +533,7 @@ function render(){
   if(!ready()){return}
   const a=document.activeElement,aid=a&&a.id,sel=a&&a.selectionStart;
   const v=VIEWS[route]||VIEWS.accueil;
-  $("#main").innerHTML=demoBanner()+v();
+  $("#main").innerHTML=demoBanner()+v();hydrate($("#main"));
   if(aid){const el=document.getElementById(aid);if(el&&el!==a&&!$("#sheetRoot").contains(el)){el.focus();try{el.setSelectionRange(sel,sel)}catch(e){}}}
 }
 /* ---------- Installation sur le téléphone ---------- */
@@ -640,7 +705,7 @@ function stockProducts(){
   return `<div class="row" style="margin-bottom:12px"><input id="stockSearch" class="grow" style="max-width:340px" placeholder="Rechercher un produit" value="${esc(UI.q)}" data-input="search"><span class="small muted">Valeur du stock : <b class="num" style="color:var(--ink)">${chf(value)}</b></span></div>
   <div class="grid g2">${cats.map(c=>`<div class="card"><h3>${esc(c)}</h3><div class="list">${ps.filter(p=>(p.cat||"Autre")===c).map(p=>{const r=si[p.id];const low=+p.min>0&&r.stock<+p.min;const ne=r.lots.filter(l=>l.expiry).map(l=>daysTo(l.expiry))[0];
     const fill=+p.min>0?Math.min(1,r.stock/(p.min*3)):null;
-    return `<div class="item click" data-act="openProduct" data-id="${p.id}"><div class="main"><b>${esc(p.name)}</b><span class="tiny muted">${chf(p.cost*(p.unit==="pce"?1:1000))} / ${p.unit==="pce"?"pce":p.unit==="g"?"kg":"L"}${ne!==undefined&&ne<=30?" · "+(ne<0?"lot périmé":"lot à "+ne+" j"):""}</span>
+    return `<div class="item click" data-act="openProduct" data-id="${p.id}"><div class="main"><b>${esc(p.name)}</b><span class="tiny muted">${chf(p.cost*(p.unit==="pce"?1:1000))} / ${p.unit==="pce"?"pce":p.unit==="g"?"kg":"L"}${ne!==undefined&&ne<=30?" · "+(ne<0?"lot périmé":"lot à "+ne+" j"):""}${clipTag(p)}</span>
       ${fill!==null?`<div class="hbar" style="height:6px;margin-top:6px;max-width:200px"><span style="width:${Math.max(fill,0)*100}%;background:${low?"var(--warn)":"var(--matcha)"}"></span></div>`:""}</div>
       <div class="end"><b class="num" style="color:${r.stock<0?"var(--bad)":"inherit"}">${fQty(r.stock,p.unit)}</b><div>${low?`<span class="pill warn">Stock bas</span>`:ne!==undefined&&ne<0?`<span class="pill bad">Périmé</span>`:""}</div></div></div>`}).join("")}</div></div>`).join("")}</div>`;
 }
@@ -657,7 +722,7 @@ function stockDates(){
 function stockPurchases(){
   const ps=all("purchases").sort((a,b)=>a.date<b.date?1:-1);
   if(!ps.length)return `<div class="card">${emptyBox("bear","Aucun achat enregistré","Chaque achat ajoute du stock, met à jour le coût moyen de vos produits et passe en comptabilité.",`<button class="btn primary" data-act="newPurchase">Enregistrer un achat</button>`)}</div>`;
-  return `<div class="card"><div class="list">${ps.map(p=>`<div class="item click" data-act="editPurchase" data-id="${p.id}"><div class="main"><b>${esc(p.supplier||"Achat")}</b><span class="tiny muted">${fDate(p.date)} · ${(p.lines||[]).length} produit${(p.lines||[]).length>1?"s":""}${p.note?" · "+esc(p.note):""}</span></div><b class="num">${chf(p.total)}</b></div>`).join("")}</div></div>`;
+  return `<div class="card"><div class="list">${ps.map(p=>`<div class="item click" data-act="editPurchase" data-id="${p.id}"><div class="main"><b>${esc(p.supplier||"Achat")}</b><span class="tiny muted">${fDate(p.date)} · ${(p.lines||[]).length} produit${(p.lines||[]).length>1?"s":""}${p.note?" · "+esc(p.note):""}${clipTag(p)}</span></div><b class="num">${chf(p.total)}</b></div>`).join("")}</div></div>`;
 }
 function stockInventory(){
   const si=stockInfo();const ps=all("products").sort((a,b)=>(a.cat||"").localeCompare(b.cat||"")||a.name.localeCompare(b.name));
@@ -672,7 +737,7 @@ function stockInventory(){
 VIEWS.carte=()=>{
   const ms=all("menu").sort(byMenuCat);
   const body=ms.length?`<div class="card"><div class="list">
-    ${ms.map(m=>{const c=recipeCost(m.recipe),ph=ht(m.price),mg=ph?(ph-c)/ph:NaN;return `<div class="item click" data-act="editMenu" data-id="${m.id}"><span class="dot" style="width:16px;height:16px;background:${esc(m.color||"#C9945F")}"></span><div class="main"><b>${esc(m.name)}${m.active===false?` <span class="pill neutral">masquée</span>`:""}</b><span class="tiny muted">${esc(m.cat||"")} · coût matière ${chf(c)} · marge ${chf(ph-c)}${CFG.vat?" HT":""}</span></div><div class="end"><b class="num">${chf(m.price)}</b><div>${marginPill(mg)}</div></div></div>`}).join("")}
+    ${ms.map(m=>{const c=recipeCost(m.recipe),ph=ht(m.price),mg=ph?(ph-c)/ph:NaN;return `<div class="item click" data-act="editMenu" data-id="${m.id}"><span class="dot" style="width:16px;height:16px;background:${esc(m.color||"#C9945F")}"></span><div class="main"><b>${esc(m.name)}${m.active===false?` <span class="pill neutral">masquée</span>`:""}</b><span class="tiny muted">${esc(m.cat||"")} · coût matière ${chf(c)} · marge ${chf(ph-c)}${CFG.vat?" HT":""}${clipTag(m)}</span></div><div class="end"><b class="num">${chf(m.price)}</b><div>${marginPill(mg)}</div></div></div>`}).join("")}
   </div><p class="tiny muted" style="margin-bottom:0">Le coût matière se calcule à partir de la recette et du coût moyen d’achat de chaque ingrédient.${CFG.vat?" La marge est calculée sur le prix hors TVA ("+num(CFG.vatRate,1)+" %).":""} Repère : au-dessus de 70 % c’est confortable, sous 55 % il faut revoir le prix ou la recette.</p></div>`
    :`<div class="card">${emptyBox("bear","Aucune boisson à la carte","Ajoutez une boisson, son prix et sa recette : la marge est calculée tout de suite.",`<button class="btn primary" data-act="newMenu">Ajouter une boisson</button>`)}</div>`;
   return head("Carte & marges","Prix de vente, recettes et marge de chaque boisson.",`<button class="btn primary" data-act="newMenu">${ic("plus")}Boisson</button>`)+body;
@@ -685,7 +750,7 @@ VIEWS.evenements=()=>{
   const past=evs.filter(e=>evLast(e)<t).sort((a,b)=>a.date<b.date?1:-1);
   const st=past.map(e=>({e,s:eventStats(e)}));
   const best=[...st].sort((a,b)=>b.s.profit-a.s.profit)[0];
-  const card=(e,s)=>`<div class="item click" data-act="openEvent" data-id="${e.id}"><img alt="" src="${IMG.chick}" width="40" height="40"><div class="main"><b>${esc(e.name)}</b><span class="tiny muted">${evWhen(e)}${e.place?" · "+esc(e.place):""}${e.hours?" · "+num(e.hours,1)+" h":""}</span></div>
+  const card=(e,s)=>`<div class="item click" data-act="openEvent" data-id="${e.id}"><img alt="" src="${IMG.chick}" width="40" height="40"><div class="main"><b>${esc(e.name)}</b><span class="tiny muted">${evWhen(e)}${e.place?" · "+esc(e.place):""}${e.hours?" · "+num(e.hours,1)+" h":""}${clipTag(e)}</span></div>
     <div class="end">${s?`<b class="num" style="color:${s.profit<0?"var(--bad)":"var(--good)"}">${chf(s.profit)}</b><div class="tiny muted">${chf(s.rev)} de ventes</div>`:`<span class="pill info">${daysTo(e.date)<=0?"En cours":"Dans "+daysTo(e.date)+" j"}</span>`}</div></div>`;
   return head("Manifestations","Marchés, fêtes et événements : ce que chacun rapporte vraiment.",`<button class="btn primary" data-act="newEvent">${ic("plus")}Manifestation</button>`)+
   (evs.length?`<div class="stack">
@@ -701,7 +766,7 @@ function eventSheet(id){
   const hrs={};s.list.filter(t=>!t.manual).forEach(t=>{const h=new Date(t.ts).getHours();hrs[h]=(hrs[h]||0)+t.total});
   const hk=Object.keys(hrs).map(Number).sort((a,b)=>a-b);
   const peak=hk.sort((a,b)=>hrs[b]-hrs[a])[0];
-  const linked=all("expenses").filter(x=>x.eventId===e.id);
+  const linked=all("expenses").filter(x=>x.eventId===e.id);attInit("events",e.id,e.files);
   openSheet(`<div class="sheet-head"><div><h2>${esc(e.name)}</h2><div class="small muted">${evWhen(e)}${e.place?" · "+esc(e.place):""}${e.hours?" · "+num(e.hours,1)+" h":""}</div></div><button class="x" data-act="close" aria-label="Fermer">×</button></div>
   <div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr))">
     <div class="kpi hero"><span class="label">Bénéfice net</span><b>${chf(s.profit)}</b><small>${s.rev?pct(s.profit/s.rev)+" des ventes":"pas encore de vente"}</small></div>
@@ -719,6 +784,7 @@ function eventSheet(id){
   ${s.n?`<div class="row small" style="margin-top:10px;gap:16px"><span>Ticket moyen <b>${chf(s.avg)}</b></span>${s.perHour?`<span>Par heure <b>${chf(s.perHour)}</b></span>`:""}${peak!==undefined?`<span>Heure de pointe <b>${peak} h – ${peak+1} h</b></span>`:""}</div>
   <div class="label" style="margin-top:14px">Boissons vendues</div><div class="row small" style="margin-top:6px">${Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([n,q])=>`<span class="pill neutral">${q}× ${esc(n)}</span>`).join("")}</div>`:""}
   ${e.note?`<p class="small muted">${esc(e.note)}</p>`:""}
+  ${attBlock()}
   <div class="formfoot"><button class="btn" data-act="editEvent" data-id="${e.id}">Modifier</button>${evLast(e)>=addDays(today(),-3)?`<button class="btn primary" data-act="sellAt" data-id="${e.id}">${ic("cash")}Vendre ici</button>`:""}</div>`);
 }
 
@@ -731,16 +797,16 @@ VIEWS.materiel=()=>{
   const sp=s=>`<span class="pill ${s==="Bon état"?"good":s==="À surveiller"?"info":s==="À réparer"?"warn":"bad"}">${esc(s||"Bon état")}</span>`;
   return head("Matériel","Machines, stand et ustensiles : ce que vous possédez et dans quel état.",`<button class="btn primary" data-act="newEquip">${ic("plus")}Matériel</button>`)+
   (ms.length?`<div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px"><div class="kpi"><span class="label">Objets</span><b>${num(n)}</b></div><div class="kpi"><span class="label">Valeur d’achat</span><b>${chf(val)}</b></div><div class="kpi"><span class="label">À réparer</span><b>${ms.filter(m=>m.state==="À réparer"||m.state==="Hors service").length}</b></div></div>
-   <div class="grid g2">${cats.map(c=>`<div class="card"><h3>${esc(c)}</h3><div class="list">${ms.filter(m=>(m.cat||"Autre")===c).map(m=>`<div class="item click" data-act="editEquip" data-id="${m.id}"><div class="main"><b>${esc(m.name)}${(+m.qty||1)>1?` <span class="muted">×${m.qty}</span>`:""}</b><span class="tiny muted">${m.place?esc(m.place)+" · ":""}${m.date?"acheté le "+fDate(m.date):""}</span></div><div class="end">${sp(m.state)}<div class="tiny muted num">${m.price?chf((+m.price)*(+m.qty||1)):""}</div></div></div>`).join("")}</div></div>`).join("")}</div>`
+   <div class="grid g2">${cats.map(c=>`<div class="card"><h3>${esc(c)}</h3><div class="list">${ms.filter(m=>(m.cat||"Autre")===c).map(m=>`<div class="item click" data-act="editEquip" data-id="${m.id}"><div class="main"><b>${esc(m.name)}${(+m.qty||1)>1?` <span class="muted">×${m.qty}</span>`:""}</b><span class="tiny muted">${m.place?esc(m.place)+" · ":""}${m.date?"acheté le "+fDate(m.date):""}${clipTag(m)}</span></div><div class="end">${sp(m.state)}<div class="tiny muted num">${m.price?chf((+m.price)*(+m.qty||1)):""}</div></div></div>`).join("")}</div></div>`).join("")}</div>`
    :`<div class="card">${emptyBox("bear","Aucun matériel inventorié","Notez vos machines, la tente, les glacières… Vous saurez toujours ce que vous avez, où, et ce qui doit être réparé.",`<button class="btn primary" data-act="newEquip">Ajouter du matériel</button>`)}</div>`);
 };
 
 /* ---------- Comptabilité ---------- */
 const EXP_CATS=["Emplacement & stand","Transport & carburant","Énergie & gaz","Emballages & consommables","Marketing","Assurances & taxes","Frais bancaires & paiement","Loyer & stockage","Salaires & aides","Autre"];
 VIEWS.compta=()=>{
-  const tabs=[["bilan","Bilan"],["journal","Journal"],["depenses","Dépenses"]];
+  const tabs=[["bilan","Bilan"],["journal","Journal"],["depenses","Dépenses"],["caisse","Fonds de caisse"]];
   return head("Comptabilité","Recettes, dépenses et résultat, prêts pour la fiduciaire.",`<button class="btn" data-act="exportJournal">${ic("down")}Export CSV</button><button class="btn primary" data-act="newExpense">${ic("plus")}Dépense</button>`)+
-  `<div class="seg" style="margin-bottom:14px">${tabs.map(([k,l])=>`<button class="${UI.comptaTab===k?"on":""}" data-act="comptaTab" data-v="${k}">${l}</button>`).join("")}</div>`+({bilan:comptaBilan,journal:comptaJournal,depenses:comptaDepenses})[UI.comptaTab]();
+  `<div class="seg" style="margin-bottom:14px">${tabs.map(([k,l])=>`<button class="${UI.comptaTab===k?"on":""}" data-act="comptaTab" data-v="${k}">${l}</button>`).join("")}</div>`+({bilan:comptaBilan,journal:comptaJournal,depenses:comptaDepenses,caisse:comptaCaisse})[UI.comptaTab]();
 };
 function journal(){
   return memo("journal",()=>{
@@ -782,7 +848,7 @@ function comptaJournal(){
 function comptaDepenses(){
   const xs=all("expenses").sort((a,b)=>a.date<b.date?1:-1);
   return `<div class="card"><p class="small muted" style="margin-top:0">Les achats de marchandises (onglet Stock), le matériel et les frais de manifestation sont déjà comptés. Ajoutez ici tout le reste : assurance, carburant, publicité…</p>
-  ${xs.length?`<div class="list">${xs.map(x=>`<div class="item click" data-act="editExpense" data-id="${x.id}"><div class="main"><b>${esc(x.label||x.cat)}</b><span class="tiny muted">${fDate(x.date)} · ${esc(x.cat)}${x.eventId&&get("events",x.eventId)?" · "+esc(get("events",x.eventId).name):""}</span></div><b class="num">${chf(x.amount)}</b></div>`).join("")}</div>`:emptyBox("bunny","Aucune autre dépense","Ajoutez la première avec le bouton Dépense.")}</div>`;
+  ${xs.length?`<div class="list">${xs.map(x=>`<div class="item click" data-act="editExpense" data-id="${x.id}"><div class="main"><b>${esc(x.label||x.cat)}</b><span class="tiny muted">${fDate(x.date)} · ${esc(x.cat)}${x.eventId&&get("events",x.eventId)?" · "+esc(get("events",x.eventId).name):""}${clipTag(x)}</span></div><b class="num">${chf(x.amount)}</b></div>`).join("")}</div>`:emptyBox("bunny","Aucune autre dépense","Ajoutez la première avec le bouton Dépense.")}</div>`;
 }
 
 /* ---------- Plus & réglages ---------- */
@@ -805,18 +871,303 @@ VIEWS.reglages=()=>head("Réglages","TVA, commissions et sauvegardes.")+`<div cl
   <div class="card"><h2>Tout recommencer</h2><p class="small muted" style="margin-top:0">Supprime toutes les données : produits, ventes, comptabilité. Faites une sauvegarde avant.</p><button class="btn danger" data-act="wipe" data-confirm="Confirmer la suppression totale" ${READONLY?"disabled":""}>Supprimer toutes les données</button></div>
   </div>`;
 
+
+/* ---------- Pièces jointes (photos et PDF) ---------- */
+// Les fichiers sont gardés hors des collections synchronisées : avec Firebase, dans « files » (fiche) et
+// « filechunks » (contenu découpé en morceaux de 700 000 caractères), lus seulement à l'ouverture.
+// Sans Firebase, ils restent sur l'appareil (IndexedDB). Chaque fiche garde la liste files:[{id,name,type,size,n}].
+const FILE_MAX=15*1024*1024,CHUNK=700000;
+const useFire=()=>MODE==="cloud"&&!!DB&&!!window.firebase;
+let idbP;function idb(){return idbP||(idbP=new Promise((res,rej)=>{const r=indexedDB.open("kojitea-files",1);r.onupgradeneeded=()=>r.result.createObjectStore("f");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))}
+async function idbDo(mode,fn){const db=await idb();return new Promise((res,rej)=>{const tx=db.transaction("f",mode);const r=fn(tx.objectStore("f"));tx.oncomplete=()=>res(r&&r.result);tx.onerror=()=>rej(tx.error)})}
+const b64=blob=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]||"");r.onerror=()=>rej(r.error);r.readAsDataURL(blob)});
+function unb64(s,type){const bin=atob(s);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type:type||""})}
+const FCACHE=new Map(),FREF=new Map(),URLC=new Map();
+const fSize=n=>n<1048576?num(n/1024,0)+" Ko":num(n/1048576,1)+" Mo";
+const isImg=f=>/^image\//.test(f.type||"");
+async function fileSave(ref,blob){
+  if(useFire()){
+    const s=await b64(blob);const n=Math.max(1,Math.ceil(s.length/CHUNK));ref.n=n;
+    const ws=[];for(let i=0;i<n;i++)ws.push(DB.collection("filechunks").doc(ref.id+"_"+i).set({f:ref.id,i,d:s.slice(i*CHUNK,(i+1)*CHUNK)}));
+    ws.push(DB.collection("files").doc(ref.id).set({...ref,createdAt:new Date().toISOString()}));
+    Promise.all(ws).catch(dbErr); // pas d'attente : hors connexion, Firestore envoie plus tard
+  }else{ref.n=0;await idbDo("readwrite",st=>st.put({ref:{...ref},blob},ref.id))}
+  FCACHE.set(ref.id,blob);return ref;
+}
+async function fileGet(ref){
+  if(FCACHE.has(ref.id))return FCACHE.get(ref.id);
+  let blob=null;
+  if(useFire()&&ref.n){try{const parts=await Promise.all(Array.from({length:ref.n},(_,i)=>DB.collection("filechunks").doc(ref.id+"_"+i).get()));if(parts.every(p=>p.exists))blob=unb64(parts.map(p=>p.data().d).join(""),ref.type)}catch(e){}}
+  if(!blob){try{const r=await idbDo("readonly",st=>st.get(ref.id));if(r)blob=r.blob}catch(e){}}
+  if(blob)FCACHE.set(ref.id,blob);return blob;
+}
+function fileDel(ref){
+  FCACHE.delete(ref.id);if(URLC.has(ref.id)){URL.revokeObjectURL(URLC.get(ref.id));URLC.delete(ref.id)}
+  if(useFire()){for(let i=0;i<(ref.n||1);i++)DB.collection("filechunks").doc(ref.id+"_"+i).delete().catch(()=>{});DB.collection("files").doc(ref.id).delete().catch(()=>{})}
+  idbDo("readwrite",st=>st.delete(ref.id)).catch(()=>{});
+}
+const delFiles=o=>(o&&o.files||[]).forEach(fileDel);
+const clipTag=o=>(o&&o.files||[]).length?` · <span class="clip" title="Pièces jointes">${ic("clip")}${o.files.length}</span>`:"";
+const blobUrl=(id,b)=>{if(!URLC.has(id))URLC.set(id,URL.createObjectURL(b));return URLC.get(id)};
+const thumb=(f,cls="")=>{FREF.set(f.id,f);return `<img alt="" ${cls?`class="${cls}"`:""} data-thumb="${f.id}" ${URLC.has(f.id)?`src="${URLC.get(f.id)}"`:""}>`};
+function hydrate(root){(root||document).querySelectorAll("img[data-thumb]:not([src]):not([data-l])").forEach(img=>{img.dataset.l=1;const f=FREF.get(img.dataset.thumb);if(f)fileGet(f).then(b=>{if(b)img.src=blobUrl(f.id,b)})})}
+async function shrinkImage(file){
+  try{
+    const url=URL.createObjectURL(file);const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});
+    const sc=Math.min(1,2000/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement("canvas");c.width=Math.round(img.naturalWidth*sc);c.height=Math.round(img.naturalHeight*sc);
+    const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
+    const b=await new Promise(r=>c.toBlob(r,"image/jpeg",.82));
+    return b&&(b.size<file.size||!/^image\/(jpeg|png|webp|gif)$/.test(file.type))?new File([b],(file.name||"photo").replace(/\.\w+$/,"")+".jpg",{type:"image/jpeg"}):file;
+  }catch(e){return file}
+}
+function niceName(f){let n=f.name||"fichier";if(/^(image|photo)\.\w+$/i.test(n)||!f.name){const d=new Date();n="photo-"+today()+"-"+String(d.getHours()).padStart(2,"0")+String(d.getMinutes()).padStart(2,"0")+String(d.getSeconds()).padStart(2,"0")+".jpg"}return n}
+// Pièces jointes de la feuille ouverte : sur une fiche existante, chaque ajout ou retrait est enregistré tout de suite ;
+// sur une nouvelle fiche, ils sont gardés jusqu'à « Enregistrer » (et effacés si on ferme sans enregistrer).
+function attInit(col,id,files){window.__att={col,id:id||null,files:(files||[]).map(f=>({...f})),added:[]}}
+function attCommit(){const A=window.__att;window.__att=null;return A?A.files.map(f=>({id:f.id,name:f.name,type:f.type,size:f.size,n:f.n||0})):[]}
+function attPersist(A){if(!A.id)return;const o=get(A.col,A.id);if(o)put(A.col,{...o,files:A.files.map(f=>({id:f.id,name:f.name,type:f.type,size:f.size,n:f.n||0}))})}
+const attChip=(f,edit)=>{FREF.set(f.id,f);return `<div class="att" data-act="attOpen" data-id="${f.id}" title="${esc(f.name)}"><div class="th">${isImg(f)?thumb(f):ic("file")}</div><span>${esc(f.name)}</span>${edit?`<button type="button" class="rm" data-act="attDel" data-id="${f.id}" data-confirm="Retirer" aria-label="Retirer ${esc(f.name)}">×</button>`:""}</div>`};
+function attList(){const A=window.__att;if(!A)return "";const edit=!READONLY;const coarse=window.matchMedia&&matchMedia("(pointer:coarse)").matches;
+  return (A.files.length?`<div class="atts">${A.files.map(f=>attChip(f,edit)).join("")}</div>`:`<p class="tiny muted" style="margin:0">Aucune pièce jointe.</p>`)+
+  (edit?`<div class="row" style="margin-top:10px">${coarse?`<label class="btn sm">${ic("camera")}Prendre une photo<input class="vh" type="file" accept="image/*" capture="environment" data-change="attPick"></label>`:""}<label class="btn sm">${ic("clip")}${coarse?"Photo ou PDF":"Ajouter une photo ou un PDF"}<input class="vh" type="file" accept="image/*,application/pdf,.pdf,.heic" multiple data-change="attPick"></label></div>`:"")}
+const attBlock=(hint="")=>`<div class="label" style="margin:18px 0 6px">Pièces jointes</div>${hint?`<p class="tiny muted" style="margin:0 0 8px">${hint}</p>`:""}<div id="attList">${attList()}</div>`;
+function attRefresh(A){const el=$("#attList");if(el&&window.__att===A){el.innerHTML=attList();hydrate(el)}}
+async function attPick(input){
+  const A=window.__att;const list=[...(input.files||[])];input.value="";if(!A||!list.length)return;
+  for(const f0 of list){
+    const pdf=f0.type==="application/pdf"||/\.pdf$/i.test(f0.name),img=/^image\//.test(f0.type)||/\.(heic|heif)$/i.test(f0.name);
+    if(!pdf&&!img){toast("Seules les photos et les PDF peuvent être joints.","bunny");continue}
+    toast("Ajout de la pièce jointe…","bear");
+    const f=img?await shrinkImage(f0):f0;
+    if(f.size>FILE_MAX){toast(`« ${f0.name} » est trop lourd (15 Mo au maximum).`,"bunny");continue}
+    const ref={id:uid(),name:niceName(f),type:pdf?"application/pdf":(f.type||"image/jpeg"),size:f.size};
+    try{await fileSave(ref,f)}catch(e){toast("Impossible d’enregistrer ce fichier.","bunny");continue}
+    if(window.__att!==A&&!A.id){fileDel(ref);continue}
+    A.files.push(ref);if(!A.id)A.added.push(ref);attPersist(A);attRefresh(A);toast("Pièce jointe ajoutée.","bear");
+  }
+}
+function attRemove(id){const A=window.__att;if(!A)return;const f=A.files.find(x=>x.id===id);if(!f)return;A.files=A.files.filter(x=>x!==f);A.added=A.added.filter(x=>x!==f);fileDel(f);attPersist(A);attRefresh(A)}
+async function attOpen(id){const f=FREF.get(id);if(!f)return;const b=await fileGet(f);if(!b){toast("Fichier pas encore disponible sur cet appareil. Vérifiez la connexion.","bunny");return}showFile(b,f.name)}
+function showFile(blob,name){
+  closeViewer();const type=blob.type||"";const url=URL.createObjectURL(blob);let file=null;try{file=new File([blob],name,{type})}catch(e){}
+  let share=false;try{share=!!(file&&navigator.canShare&&navigator.canShare({files:[file]}))}catch(e){}
+  window.__vf={file,url,name};const fine=window.matchMedia&&matchMedia("(pointer:fine)").matches;const pdf=type==="application/pdf";
+  const body=type.startsWith("image/")?`<img alt="${esc(name)}" src="${url}">`:pdf&&fine?`<iframe title="${esc(name)}" src="${url}"></iframe>`:`<div class="empty">${ic("file")}<b style="color:var(--ink)">${esc(name)}</b><span class="small">${pdf?"Document PDF":"Fichier"} · ${fSize(blob.size)}</span></div>`;
+  $("#viewerRoot").innerHTML=`<div class="vscrim" data-act="vclose"><div class="viewer" role="dialog" aria-modal="true" aria-label="${esc(name)}"><div class="vhead"><b>${esc(name)}</b><button class="x" data-act="vclose" aria-label="Fermer">×</button></div>
+   <div class="vbody">${body}</div>
+   <div class="row vfoot"><a class="btn" href="${url}" target="_blank" rel="noopener">${ic("open")}Ouvrir</a>${share?`<button class="btn" data-act="vshare">${ic("share")}Partager</button>`:""}<a class="btn primary" href="${url}" download="${esc(name)}">${ic("down")}Télécharger</a></div></div></div>`;
+}
+function closeViewer(){const v=window.__vf;if(v){setTimeout(()=>URL.revokeObjectURL(v.url),60000);window.__vf=null}$("#viewerRoot").innerHTML=""}
+
+/* ---------- Recettes ---------- */
+const RUNITS=[["g","g"],["kg","kg"],["ml","ml"],["cl","cl"],["dl","dl"],["l","litres (l)"],["pce","pièces"],["cc","c. à café"],["cs","c. à soupe"],["tasse","tasses"],["pincee","pincée"],["","sans unité"]];
+const UCONV={mg:["g",.001],g:["g",1],kg:["g",1000],ml:["ml",1],cl:["ml",10],dl:["ml",100],l:["ml",1000],pce:["pce",1]};
+function fIng(q,u){
+  if(q==null||q===""||!isFinite(+q))return u==="pincee"?"1 pincée":"";
+  q=+q;
+  if(u==="g"&&q>=1000){q/=1000;u="kg"}else if(u==="kg"&&q<1){q*=1000;u="g"}
+  else if(u==="ml"&&q>=1000){q/=1000;u="l"}else if(u==="l"&&q<1){q*=10;u="dl"}
+  const pl=q>1,n=num(q,q<10?2:q<100?1:0);
+  const lab={pce:pl?"pièces":"pièce",cc:"c. à café",cs:"c. à soupe",pincee:pl?"pincées":"pincée",tasse:pl?"tasses":"tasse"}[u]??u;
+  return n+(lab?" "+lab:"");
+}
+function ingCost(i,f){const k=String(i.n||"").trim().toLowerCase();const p=all("products").find(p=>p.name.toLowerCase()===k);const c=UCONV[i.u];if(!p||!(+i.q)||!c||c[0]!==p.unit)return null;return (+i.q)*f*c[1]*(+p.cost||0)}
+const splitSteps=s=>String(s||"").split(/\n+/).map(x=>x.replace(/^\s*(\d+[.)]|[-•*])\s*/,"").trim()).filter(Boolean);
+const rcats=()=>[...new Set(["Boissons","Sirops & bases","Toppings","Pâtisseries","Autres",...all("recipes").map(r=>r.cat)])].filter(Boolean);
+const rCover=r=>(r.files||[]).find(isImg);
+const slug=s=>String(s||"recette").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"recette";
+VIEWS.recettes=()=>{
+  const q=(UI.rq||"").toLowerCase();
+  const act=`<button class="btn primary" data-act="newRecipe">${ic("plus")}Recette</button>`;
+  const h=head("Recettes","Vos recettes avec leurs quantités, à ajuster et à partager en fiche.",act);
+  if(!all("recipes").length)return h+`<div class="card">${emptyBox("bunny","Aucune recette pour l’instant","Notez vos recettes de sirops, perles, pâtisseries… avec les quantités en g, kg, dl ou litres, puis exportez une jolie fiche en image ou en PDF.",`<button class="btn primary" data-act="newRecipe">Créer une recette</button>`)}</div>`;
+  const rs=all("recipes").filter(r=>!q||r.name.toLowerCase().includes(q)||(r.ings||[]).some(i=>String(i.n||"").toLowerCase().includes(q))).sort((a,b)=>(a.cat||"Autres").localeCompare(b.cat||"Autres")||a.name.localeCompare(b.name));
+  const cats=[...new Set(rs.map(r=>r.cat||"Autres"))];
+  const card=r=>{const c=rCover(r);return `<div class="rcard" data-act="openRecipe" data-id="${r.id}"><div class="ph">${c?thumb(c):`<img class="ms" alt="" src="${IMG.bunny}">`}</div><div class="bd"><b>${esc(r.name)}</b><div class="tiny muted">${[r.time?esc(r.time):"",r.yq?num(r.yq,2)+" "+esc(r.yu||""):"",(r.ings||[]).length+" ingrédient"+((r.ings||[]).length>1?"s":"")].filter(Boolean).join(" · ")}${clipTag(r)}</div></div></div>`};
+  return h+`<div class="row" style="margin-bottom:14px"><input id="recipeSearch" class="grow" style="max-width:340px" placeholder="Rechercher une recette ou un ingrédient" value="${esc(UI.rq||"")}" data-input="rsearch"></div>`+
+    (rs.length?cats.map(c=>`<h3 style="margin:4px 0 10px">${esc(c)}</h3><div class="rgrid" style="margin-bottom:20px">${rs.filter(r=>(r.cat||"Autres")===c).map(card).join("")}</div>`).join(""):`<p class="muted">Aucune recette ne correspond à « ${esc(UI.rq)} ».</p>`);
+};
+function rvFactor(){const r=get("recipes",window.__rv.id);const base=+r.yq||1;return (+window.__rv.n||base)/base}
+function rvIngs(){
+  const r=get("recipes",window.__rv.id);if(!r)return "";const f=rvFactor();const ings=r.ings||[];
+  if(!ings.length)return `<p class="small muted">Aucun ingrédient.</p>`;
+  const costs=ings.map(i=>ingCost(i,f)),known=costs.filter(c=>c!=null);
+  return `<div>${ings.map(i=>`<div class="ing"><b>${esc(fIng(i.q==null?null:i.q*f,i.u))}</b><span>${esc(i.n)}</span></div>`).join("")}</div>`+
+    (known.length?`<p class="tiny muted" style="margin:8px 0 0">Coût estimé : <b class="num" style="color:var(--ink)">${chf(sum(known))}</b>${known.length<ings.length?` pour ${known.length} ingrédient${known.length>1?"s":""} sur ${ings.length} (ceux qui portent le nom d’un produit du stock)`:""}.</p>`:"");
+}
+function recipeView(id){
+  const r=get("recipes",id);if(!r)return;window.__rv={id,n:+r.yq||1};attInit("recipes",id,r.files);
+  const c=rCover(r),steps=splitSteps(r.steps);
+  openSheet(`<div class="sheet-head"><div style="min-width:0"><h2>${esc(r.name)}</h2><div class="small muted">${[r.cat,r.time].filter(Boolean).map(esc).join(" · ")}</div></div><button class="x" data-act="close" aria-label="Fermer">×</button></div>
+  ${c?thumb(c,"rcover"):""}
+  <div class="calc scaler"><span>${r.yq?"Quantités pour":"Multiplier la recette par"}</span><div class="qty"><button type="button" data-act="rScale" data-d="-1" aria-label="Moins">−</button><input id="rvN" type="number" min="0" step="any" inputmode="decimal" value="${num(window.__rv.n,2).replace(/\s/g,"").replace(",",".")}" data-input="rscale" aria-label="Quantité"><button type="button" data-act="rScale" data-d="1" aria-label="Plus">+</button></div><span>${r.yq?esc(r.yu||"portions"):"fois"}</span></div>
+  <div class="grid g2" style="margin-top:14px"><div><h3 style="margin-bottom:6px">Ingrédients</h3><div id="rvIngs">${rvIngs()}</div></div>
+  <div><h3 style="margin-bottom:8px">Préparation</h3>${steps.length?`<ol class="steps">${steps.map(s=>`<li><span>${esc(s)}</span></li>`).join("")}</ol>`:`<p class="small muted">Aucune étape notée.</p>`}</div></div>
+  ${r.note?`<div class="banner" style="margin:16px 0 0"><img alt="" src="${IMG.bear}"><div class="grow small"><b>Astuces</b><div>${esc(r.note).replace(/\n/g,"<br>")}</div></div></div>`:""}
+  ${attBlock()}
+  <div class="formfoot"><button class="btn" data-act="editRecipe" data-id="${id}">Modifier</button><div class="row"><button class="btn" data-act="recipeExport" data-k="png">${ic("image")}Fiche en image</button><button class="btn primary" data-act="recipeExport" data-k="pdf">${ic("file")}Fiche en PDF</button></div></div>`);
+}
+function ingLines(){return window.__ings.map((l,i)=>`<div class="line l4i"><input aria-label="Ingrédient" list="ingNames" placeholder="Ingrédient" value="${esc(l.n||"")}" data-iline="${i}" data-k="n"><input aria-label="Quantité" type="number" step="any" min="0" inputmode="decimal" placeholder="Qté" value="${l.q??""}" data-iline="${i}" data-k="q"><select aria-label="Unité" data-iline="${i}" data-k="u">${RUNITS.map(([v,lab])=>opt(v,lab,l.u??"g")).join("")}</select><button type="button" class="x" data-act="delILine" data-i="${i}" aria-label="Retirer">×</button></div>`).join("")+
+  `<datalist id="ingNames">${[...new Set(all("products").map(p=>p.name))].map(n=>`<option value="${esc(n)}">`).join("")}</datalist>`}
+function recipeSheet(id){
+  const r=id?get("recipes",id):{yu:"portions",ings:[{u:"g"}]};
+  window.__ings=(r.ings||[]).map(i=>({...i}));if(!window.__ings.length)window.__ings=[{u:"g"}];
+  attInit("recipes",id,r.files);
+  openSheet(`<div class="sheet-head"><h2>${id?"Modifier la recette":"Nouvelle recette"}</h2><button class="x" data-act="close" aria-label="Fermer">×</button></div>
+  <form data-submit="recipe" data-id="${id||""}"><div class="fields">
+   ${field("rName","Nom de la recette",`<input id="rName" name="name" required value="${esc(r.name||"")}" placeholder="ex. Sirop de sucre brun">`,true)}
+   ${field("rCat","Catégorie",`<input id="rCat" name="cat" list="rcats" value="${esc(r.cat||"")}" placeholder="ex. Sirops & bases"><datalist id="rcats">${rcats().map(c=>`<option value="${esc(c)}">`).join("")}</datalist>`)}
+   ${field("rTime","Temps de préparation",`<input id="rTime" name="time" value="${esc(r.time||"")}" placeholder="ex. 45 min">`)}
+   ${field("rYq","Quantité obtenue",`<input id="rYq" name="yq" type="number" step="any" min="0" inputmode="decimal" value="${r.yq??""}" placeholder="ex. 4">`)}
+   ${field("rYu","Unité de la quantité",`<input id="rYu" name="yu" list="ryus" value="${esc(r.yu||"")}" placeholder="ex. portions"><datalist id="ryus">${["portions","boissons","litres","bouteilles","pièces","kg"].map(c=>`<option value="${c}">`).join("")}</datalist>`)}
+  </div>
+  <div class="label" style="margin:16px 0 6px">Ingrédients</div>
+  <p class="tiny muted" style="margin:0 0 6px">Si un ingrédient porte le nom d’un produit du stock, son coût est estimé automatiquement.</p>
+  <div class="lines" id="rIngLines">${ingLines()}</div>
+  <button type="button" class="btn sm" style="margin-top:8px" data-act="addILine">${ic("plus")}Ajouter un ingrédient</button>
+  <div class="fields" style="margin-top:16px">
+   ${field("rSteps","Préparation (une étape par ligne)",`<textarea id="rSteps" name="steps" rows="6" placeholder="Porter l’eau à ébullition.&#10;Ajouter les perles…">${esc(r.steps||"")}</textarea>`,true)}
+   ${field("rNote","Astuces et remarques",`<textarea id="rNote" name="note" placeholder="Conservation, variantes…">${esc(r.note||"")}</textarea>`,true)}
+  </div>
+  ${attBlock("La première photo jointe illustre la fiche exportée.")}
+  <div class="formfoot">${id?`<button type="button" class="btn danger" data-act="delRecipe" data-id="${id}" data-confirm="Supprimer la recette ?">Supprimer</button>`:"<span></span>"}<button class="btn primary">Enregistrer</button></div></form>`);
+}
+// Fiche visuelle : dessinée sur un canvas au format A4 (1240 px de large), exportée en PNG ou en PDF (image JPEG dans un PDF minimal).
+const loadImg=src=>new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>res(null);i.src=src});
+function rrect(x,X,Y,W,H,R){x.beginPath();x.moveTo(X+R,Y);x.arcTo(X+W,Y,X+W,Y+H,R);x.arcTo(X+W,Y+H,X,Y+H,R);x.arcTo(X,Y+H,X,Y,R);x.arcTo(X,Y,X+W,Y,R);x.closePath()}
+function wrapText(x,text,maxW,firstMax){const out=[];String(text||"").split(/\n/).forEach(par=>{let line="";par.split(/\s+/).filter(Boolean).forEach(w=>{const lim=out.length===0&&firstMax!=null?firstMax:maxW;const t=line?line+" "+w:w;if(!line||x.measureText(t).width<=lim)line=t;else{out.push(line);line=w}});out.push(line)});return out}
+async function recipeCanvas(r,f,n){
+  try{await Promise.all(["600 60px Fredoka","800 30px 'Nunito Sans'","400 30px 'Nunito Sans'"].map(s=>document.fonts.load(s)))}catch(e){}
+  const W=1240,M=80,FD="Fredoka, 'Nunito Sans', system-ui, sans-serif",FB="'Nunito Sans', system-ui, sans-serif";
+  const C={bg:"#FBFAF4",deep:"#2F5A24",matcha:"#8DB04A",ink:"#1E2916",muted:"#646F59",soft:"#ECF1E1",tea:"#F3E6D7",line:"#DCE3CF"};
+  const cf=rCover(r);let cover=null;if(cf){const b=await fileGet(cf);if(b)cover=await loadImg(blobUrl(cf.id,b))}
+  const logo=await loadImg(IMG.logo),bear=await loadImg(IMG.bear);
+  const ings=r.ings||[],steps=splitSteps(r.steps);
+  const meta=[r.cat,r.time,r.yq?"Pour "+num(n,2)+" "+(r.yu||""):(f!==1?"Quantités × "+num(f,2):"")].filter(Boolean).join("  ·  ");
+  const c=document.createElement("canvas");c.width=W;c.height=1754;let x=c.getContext("2d");
+  const draw=H=>{
+    x.fillStyle=C.bg;x.fillRect(0,0,W,H);
+    // En-tête
+    x.font="600 66px "+FD;const tl=wrapText(x,r.name,W-2*M-190);
+    const hh=70+tl.length*78+(meta?58:0)+60;
+    x.fillStyle=C.deep;x.fillRect(0,0,W,hh);
+    x.fillStyle="#fff";x.textBaseline="alphabetic";tl.forEach((l,i)=>x.fillText(l,M,70+60+i*78));
+    if(meta){x.font="700 30px "+FB;x.fillStyle="#D6E8BC";x.fillText(meta,M,70+tl.length*78+52)}
+    if(logo){x.fillStyle="#fff";x.beginPath();x.arc(W-M-75,hh/2,80,0,7);x.fill();const s=Math.min(130/logo.width,130/logo.height);x.drawImage(logo,W-M-75-logo.width*s/2,hh/2-logo.height*s/2,logo.width*s,logo.height*s)}
+    let y=hh+50;
+    if(cover){const ch=520,cw=W-2*M;x.save();rrect(x,M,y,cw,ch,28);x.clip();const s=Math.max(cw/cover.width,ch/cover.height);x.drawImage(cover,M+(cw-cover.width*s)/2,y+(ch-cover.height*s)/2,cover.width*s,cover.height*s);x.restore();y+=ch+50}
+    // Colonnes
+    const both=ings.length&&steps.length,LW=both?440:W-2*M,RX=both?M+LW+50:M,RW=both?W-RX-M:W-2*M;let yl=y,yr=y;
+    if(ings.length){
+      const pad=32,iw=LW-2*pad;x.font="400 29px "+FB;
+      const rows=ings.map(i=>{const q=fIng(i.q==null?null:i.q*f,i.u);x.font="800 29px "+FB;const qw=q?x.measureText(q).width+12:0;x.font="400 29px "+FB;return {q,qw,lines:wrapText(x,i.n,iw,iw-qw)}});
+      const bh=pad+56+sum(rows,rw=>rw.lines.length*40+16)+pad-16;
+      x.fillStyle=C.soft;rrect(x,M,y,LW,bh,26);x.fill();
+      x.fillStyle=C.deep;x.font="600 40px "+FD;x.fillText("Ingrédients",M+pad,y+pad+36);
+      let yy=y+pad+56+30;
+      rows.forEach((rw,k)=>{if(k){x.strokeStyle=C.line;x.setLineDash([6,6]);x.beginPath();x.moveTo(M+pad,yy-36);x.lineTo(M+LW-pad,yy-36);x.stroke();x.setLineDash([])}
+        if(rw.q){x.font="800 29px "+FB;x.fillStyle=C.deep;x.fillText(rw.q,M+pad,yy)}
+        x.font="400 29px "+FB;x.fillStyle=C.ink;rw.lines.forEach((l,j)=>x.fillText(l,M+pad+(j?0:rw.qw),yy+j*40));yy+=rw.lines.length*40+16});
+      yl=y+bh;if(!both)yr=yl+50;
+    }
+    if(steps.length){
+      let yy=both?y:yr;x.fillStyle=C.deep;x.font="600 40px "+FD;x.fillText("Préparation",RX,yy+36);yy+=80;
+      steps.forEach((s,k)=>{x.font="400 29px "+FB;const ls=wrapText(x,s,RW-72);
+        x.fillStyle=C.matcha;x.beginPath();x.arc(RX+22,yy-10,22,0,7);x.fill();x.fillStyle="#fff";x.font="800 24px "+FB;x.textAlign="center";x.fillText(String(k+1),RX+22,yy-1);x.textAlign="left";
+        x.font="400 29px "+FB;x.fillStyle=C.ink;ls.forEach((l,j)=>x.fillText(l,RX+72,yy+j*40));yy+=ls.length*40+24});
+      yr=yy;
+    }
+    y=Math.max(yl,yr)+40;
+    if(r.note){x.font="400 28px "+FB;const nl=wrapText(x,r.note,W-2*M-64);const bh=32+48+nl.length*38+24;x.fillStyle=C.tea;rrect(x,M,y,W-2*M,bh,26);x.fill();
+      x.fillStyle="#8A5A33";x.font="600 34px "+FD;x.fillText("Astuces",M+32,y+32+30);x.font="400 28px "+FB;x.fillStyle=C.ink;nl.forEach((l,j)=>x.fillText(l,M+32,y+32+48+28+j*38));y+=bh+40}
+    // Pied de page
+    const fy=Math.max(y+40,H-M-60);
+    if(H>100){if(bear)x.drawImage(bear,M,fy-40,90,90);x.fillStyle=C.deep;x.font="600 34px "+FD;x.fillText("Koji Tea",M+108,fy+12);x.fillStyle=C.muted;x.font="400 24px "+FB;x.fillText("Bubble tea & matcha · koji-tea.ch",M+108,fy+44)}
+    return fy+60+M;
+  };
+  const need=draw(1754);if(need>1754){c.height=need;x=c.getContext("2d");draw(need)}
+  return c;
+}
+async function canvasPdf(c){
+  const jpg=new Uint8Array(await (await new Promise(r=>c.toBlob(r,"image/jpeg",.92))).arrayBuffer());
+  const pw=595.28,ph=Math.round(pw*c.height/c.width*100)/100;const enc=new TextEncoder();const parts=[],offs=[];let len=0;
+  const add=p=>{const b=typeof p==="string"?enc.encode(p):p;parts.push(b);len+=b.length};const obj=(k,str)=>{offs[k]=len;add(k+" 0 obj\n"+str)};
+  add("%PDF-1.4\n");add(new Uint8Array([37,226,227,207,211,10]));
+  obj(1,"<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+  obj(2,"<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n");
+  obj(3,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n`);
+  obj(4,`<< /Type /XObject /Subtype /Image /Width ${c.width} /Height ${c.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`);add(jpg);add("\nendstream\nendobj\n");
+  const cs=`q ${pw} 0 0 ${ph} 0 0 cm /Im0 Do Q`;obj(5,`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream\nendobj\n`);
+  const xr=len;add("xref\n0 6\n0000000000 65535 f \n"+[1,2,3,4,5].map(k=>String(offs[k]).padStart(10,"0")+" 00000 n \n").join(""));
+  add(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF\n`);
+  return new Blob(parts,{type:"application/pdf"});
+}
+async function recipeExport(kind){
+  const r=get("recipes",window.__rv&&window.__rv.id);if(!r)return;toast("Création de la fiche…","bear");
+  try{const f=rvFactor(),n=+window.__rv.n||+r.yq||1;const c=await recipeCanvas(r,f,n);
+    const b=kind==="pdf"?await canvasPdf(c):await new Promise(res=>c.toBlob(res,"image/png"));
+    showFile(b,"recette-"+slug(r.name)+(f!==1?"-x"+String(Math.round(f*100)/100).replace(".",","):"")+"."+(kind==="pdf"?"pdf":"png"));$("#toastRoot").innerHTML=""}
+  catch(e){toast("La fiche n’a pas pu être créée sur cet appareil.","bunny")}
+}
+
+/* ---------- Fonds de caisse ---------- */
+const CASH_KINDS=[["Comptage","Comptage de la caisse"],["Apport","Apport d’argent (+)"],["Retrait","Retrait ou dépôt à la banque (−)"]];
+const DENOMS=[200,100,50,20,10,5,2,1,.5,.2,.1,.05];
+// Espèces attendues : dernier comptage + ventes en espèces depuis + apports − retraits.
+function cashBook(){return memo("cash",()=>{
+  const es=all("cashcounts").slice().sort((a,b)=>a.ts<b.ts?-1:1);
+  const cash=tickets().filter(t=>t.pay==="Espèces").map(t=>({ts:t.ts,a:t.total}));
+  let exp=null,last=null;const rows=[];
+  es.forEach(e=>{const prev=last?last.ts:"";const s=sum(cash.filter(t=>t.ts>prev&&t.ts<=e.ts),t=>t.a);if(exp!=null)exp+=s;
+    const row={e,sales:s,before:exp};
+    if(e.kind==="Comptage"){row.diff=exp==null?null:(+e.amount||0)-exp;exp=+e.amount||0}else if(exp!=null)exp+=(e.kind==="Retrait"?-1:1)*(+e.amount||0);else exp=e.kind==="Retrait"?-(+e.amount||0):(+e.amount||0);
+    row.after=exp;rows.push(row);last=e});
+  const since=sum(cash.filter(t=>!last||t.ts>last.ts),t=>t.a);
+  return {rows:rows.reverse(),expected:exp==null?null:exp+since,since,lastCount:es.filter(e=>e.kind==="Comptage").pop()};
+})}
+function comptaCaisse(){
+  const B=cashBook();
+  const kpi=`<div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:16px">
+    <div class="kpi hero"><span class="label">Espèces attendues</span><b>${B.expected==null?"–":chf(B.expected)}</b><small>${B.expected==null?"faites un premier comptage":"dans la caisse maintenant"}</small></div>
+    <div class="kpi"><span class="label">Dernier comptage</span><b>${B.lastCount?chf(B.lastCount.amount):"–"}</b><small>${B.lastCount?fDate(B.lastCount.date)+" à "+fTime(B.lastCount.ts):"aucun"}</small></div>
+    <div class="kpi"><span class="label">Ventes espèces depuis</span><b>${chf(B.since)}</b><small>enregistrées dans la caisse</small></div></div>`;
+  const pill=d=>d==null?"":Math.abs(d)<.005?`<span class="pill good">Juste</span>`:`<span class="pill ${Math.abs(d)<=5?"warn":"bad"}">${d>0?"+":"−"} ${chf(Math.abs(d))}</span>`;
+  return kpi+`<div class="card"><div class="card-head"><h2>Fonds de caisse</h2><button class="btn primary sm" data-act="newCash">${ic("plus")}Saisir le montant</button></div>
+  <p class="small muted" style="margin-top:0">Comptez l’argent de la caisse en début ou en fin de journée et notez le montant. L’application compare avec ce qui devrait s’y trouver d’après les ventes en espèces, et affiche l’écart.</p>
+  ${B.rows.length?`<div class="list">${B.rows.map(({e,diff,sales})=>`<div class="item click" data-act="editCash" data-id="${e.id}"><div class="main"><b>${esc(e.kind==="Comptage"?"Comptage":e.kind==="Apport"?"Apport":"Retrait")}${e.note?" · "+esc(e.note):""}</b><span class="tiny muted">${fDate(e.date)} à ${fTime(e.ts)}${e.eventId&&get("events",e.eventId)?" · "+esc(get("events",e.eventId).name):""}${sales?" · "+chf(sales)+" de ventes espèces avant":""}</span></div><div class="end"><b class="num">${e.kind==="Retrait"?"− ":e.kind==="Apport"?"+ ":""}${chf(e.amount)}</b><div>${e.kind==="Comptage"?pill(diff):""}</div></div></div>`).join("")}</div>`
+   :emptyBox("chick","Aucun comptage","Saisissez le fond de caisse de départ, par exemple CHF 200 en monnaie.",`<button class="btn primary" data-act="newCash">Saisir le fond de caisse</button>`)}</div>`;
+}
+function cashSheetForm(id){
+  const e=id?get("cashcounts",id):{kind:"Comptage",ts:new Date().toISOString()};
+  const d=new Date(e.ts);const time=String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+  const ev=ls("kojitea-event")||"";
+  openSheet(`<div class="sheet-head"><h2>${id?"Modifier le fonds de caisse":"Fonds de caisse"}</h2><button class="x" data-act="close" aria-label="Fermer">×</button></div>
+  <form data-submit="cash" data-id="${id||""}"><div class="fields">
+   ${field("kKind","Type",`<select id="kKind" name="kind">${CASH_KINDS.map(([v,l])=>opt(v,l,e.kind)).join("")}</select>`,true)}
+   ${field("kAmount","Montant (CHF)",`<input id="kAmount" name="amount" type="number" step="0.05" min="0" inputmode="decimal" required value="${e.amount??""}">`)}
+   ${field("kDate","Date",`<input id="kDate" name="date" type="date" required value="${e.date||today()}">`)}
+   ${field("kTime","Heure",`<input id="kTime" name="time" type="time" required value="${time}">`)}
+   ${field("kEv","Manifestation",`<select id="kEv" name="eventId"><option value="">Aucune</option>${all("events").sort((a,b)=>a.date<b.date?1:-1).map(x=>opt(x.id,x.name+" · "+fDate(x.date),id?e.eventId:get("events",ev)?ev:"")).join("")}</select>`)}
+   ${field("kNote","Remarque",`<input id="kNote" name="note" value="${esc(e.note||"")}" placeholder="ex. Ouverture du marché">`,true)}
+  </div>
+  <details class="calc" style="margin-top:14px" ${e.detail?"open":""}><summary>Compter billets et pièces</summary><p class="tiny muted" style="margin:6px 0 10px">Indiquez le nombre de chaque billet et pièce : le montant se calcule tout seul.</p>
+   <div class="denoms">${DENOMS.map(v=>`<label><span>${v>=10?num(v):num(v,2)}</span><input type="number" min="0" step="1" inputmode="numeric" placeholder="0" value="${e.detail&&e.detail[v]?e.detail[v]:""}" data-denom="${v}" aria-label="Nombre de ${num(v,2)} CHF"></label>`).join("")}</div>
+  </details>
+  <div class="formfoot">${id?`<button type="button" class="btn danger" data-act="delCash" data-id="${id}" data-confirm="Supprimer ?">Supprimer</button>`:"<span></span>"}<button class="btn primary">Enregistrer</button></div></form>`);
+}
+
 /* ---------- Feuilles (formulaires) ---------- */
 let sheetCleanup=null;
-function openSheet(html){$("#sheetRoot").innerHTML=`<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;document.body.style.overflow="hidden";const f=$("#sheetRoot input:not([type=hidden]),#sheetRoot select");if(f&&window.innerWidth>700)f.focus()}
-function closeSheet(){$("#sheetRoot").innerHTML="";document.body.style.overflow="";window.__cashUpd=null}
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet()});
+function openSheet(html){$("#sheetRoot").innerHTML=`<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;document.body.style.overflow="hidden";hydrate($("#sheetRoot"));const f=$("#sheetRoot input:not([type=hidden]),#sheetRoot select");if(f&&window.innerWidth>700)f.focus()}
+function closeSheet(){const A=window.__att;if(A&&!A.id)A.added.forEach(fileDel);window.__att=null;closeViewer();$("#sheetRoot").innerHTML="";document.body.style.overflow="";window.__cashUpd=null}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if($("#viewerRoot").innerHTML)closeViewer();else closeSheet()}});
 const opt=(v,l,sel)=>`<option value="${esc(v)}" ${v===sel?"selected":""}>${esc(l)}</option>`;
 const prodOptions=sel=>`<option value="">Choisir…</option>`+all("products").sort((a,b)=>a.name.localeCompare(b.name)).map(p=>opt(p.id,p.name+" ("+p.unit+")",sel)).join("");
 const field=(id,label,input,wide)=>`<div class="f ${wide?"wide":""}"><label for="${id}">${label}</label>${input}</div>`;
 const PCATS=["Thé","Lait","Sirop","Toppings","Fruits","Emballage","Autre"];
 
 function productSheet(id){
-  const p=id?get("products",id):{unit:"g",cat:"Thé"};const si=id?stockInfo()[id]:null;
+  const p=id?get("products",id):{unit:"g",cat:"Thé"};const si=id?stockInfo()[id]:null;attInit("products",id,p.files);
   openSheet(`<div class="sheet-head"><h2>${id?esc(p.name):"Nouveau produit"}</h2><button class="x" data-act="close" aria-label="Fermer">×</button></div>
   ${id?`<div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:14px"><div class="kpi hero"><span class="label">En stock</span><b>${fQty(si.stock,p.unit)}</b><small>valeur ${chf(Math.max(si.stock,0)*p.cost)}</small></div><div class="kpi"><span class="label">Consommé</span><b>${fQty(si.used,p.unit)}</b><small>depuis le début</small></div></div>
    ${si.lots.length?`<div class="label">Lots en stock</div><div class="list" style="margin-bottom:14px">${si.lots.map(l=>`<div class="item"><div class="main"><b class="num">${fQty(l.left,p.unit)}</b><span class="tiny muted">reçu le ${fDate(l.date)}</span></div><div class="end">${l.expiry?expPill(daysTo(l.expiry)):`<span class="pill neutral">Sans date</span>`}</div></div>`).join("")}</div>`:""}
@@ -829,12 +1180,12 @@ function productSheet(id){
     ${field("pCost","Coût par unité (CHF)",`<input id="pCost" name="cost" type="number" step="any" min="0" value="${p.cost??""}" placeholder="ex. 0.012 par g">`)}
     ${field("pMin","Alerte si moins de",`<input id="pMin" name="min" type="number" step="any" min="0" value="${p.min??""}" placeholder="ex. 3000">`)}
     ${id?"":field("pInit","Stock actuel",`<input id="pInit" name="init" type="number" step="any" min="0" placeholder="0">`)+field("pExp","Valable jusqu’au",`<input id="pExp" name="expiry" type="date">`)}
-  </div><p class="tiny muted">Le coût se met à jour tout seul à chaque achat (coût moyen pondéré).</p>
+  </div><p class="tiny muted">Le coût se met à jour tout seul à chaque achat (coût moyen pondéré).</p>${attBlock("Fiche technique, étiquette, photo du produit…")}
   <div class="formfoot">${id?`<button type="button" class="btn danger" data-act="delProduct" data-id="${id}" data-confirm="Supprimer le produit ?">Supprimer</button>`:"<span></span>"}<button class="btn primary">Enregistrer</button></div></form>`);
 }
 function purchaseSheet(id){
   const p=id?get("purchases",id):{date:today(),lines:[{}]};
-  window.__lines=(p.lines||[]).map(l=>({...l}));if(!window.__lines.length)window.__lines=[{}];
+  window.__lines=(p.lines||[]).map(l=>({...l}));if(!window.__lines.length)window.__lines=[{}];attInit("purchases",id,p.files);
   openSheet(`<div class="sheet-head"><h2>${id?"Achat du "+fDate(p.date):"Nouvel achat"}</h2><button class="x" data-act="close" aria-label="Fermer">×</button></div>
   ${all("products").length?"":`<p class="pill warn">Ajoutez d’abord vos produits dans le stock.</p>`}
   <form data-submit="purchase" data-id="${id||""}"><div class="fields">
@@ -847,6 +1198,7 @@ function purchaseSheet(id){
   <button type="button" class="btn sm" style="margin-top:8px" data-act="addPLine">${ic("plus")}Ajouter un produit</button>
   <div class="calc" style="margin-top:12px"><span>Total de l’achat</span><b class="num" id="puTotal">${chf(sum(window.__lines,l=>l.price))}</b></div>
   ${field("puNote","Remarque",`<input id="puNote" name="note" value="${esc(p.note||"")}" placeholder="ex. facture n° 1042">`)}
+  ${attBlock("Photo ou PDF de la facture, du bon de livraison…")}
   <div class="formfoot">${id?`<button type="button" class="btn danger" data-act="delPurchase" data-id="${id}" data-confirm="Supprimer l’achat et son stock ?">Supprimer</button>`:"<span></span>"}<button class="btn primary">Enregistrer l’achat</button></div></form>`);
 }
 function purchaseLines(){return window.__lines.map((l,i)=>{const u=l.p&&get("products",l.p)?get("products",l.p).unit:"";return `<div class="line l4"><select aria-label="Produit" data-line="${i}" data-k="p">${prodOptions(l.p)}</select>
@@ -856,7 +1208,7 @@ function purchaseLines(){return window.__lines.map((l,i)=>{const u=l.p&&get("pro
   <button type="button" class="x" data-act="delPLine" data-i="${i}" aria-label="Retirer">×</button></div>`}).join("")}
 function menuSheet(id){
   const m=id?get("menu",id):{cat:"Bubble Tea",color:"#C9945F",recipe:[{}],active:true};
-  window.__recipe=(m.recipe||[]).map(l=>({...l}));if(!window.__recipe.length)window.__recipe=[{}];
+  window.__recipe=(m.recipe||[]).map(l=>({...l}));if(!window.__recipe.length)window.__recipe=[{}];attInit("menu",id,m.files);
   const COLORS=["#C9945F","#8A5A33","#8DB04A","#2F5A24","#F2B33D","#F4A38E","#E96F8E","#9B7BC8","#7CB8D6","#3B2A20"];
   openSheet(`<div class="sheet-head"><h2>${id?esc(m.name):"Nouvelle boisson"}</h2><button class="x" data-act="close" aria-label="Fermer">×</button></div>
   <form data-submit="menu" data-id="${id||""}"><div class="fields">
@@ -870,13 +1222,14 @@ function menuSheet(id){
   <button type="button" class="btn sm" style="margin-top:8px" data-act="addRLine">${ic("plus")}Ajouter un ingrédient</button>
   <div class="calc" style="margin-top:12px" id="mCalc">${recipeCalc(m.price)}</div>
   <label class="check" style="margin-top:12px"><input type="checkbox" name="active" ${m.active!==false?"checked":""}> Visible dans la caisse</label>
+  ${attBlock()}
   <div class="formfoot">${id?`<button type="button" class="btn danger" data-act="delMenu" data-id="${id}" data-confirm="Supprimer la boisson ?">Supprimer</button>`:"<span></span>"}<button class="btn primary">Enregistrer</button></div></form>`);
 }
 function recipeLines(){return window.__recipe.map((l,i)=>{const u=l.p&&get("products",l.p)?get("products",l.p).unit:"";return `<div class="line l3"><select aria-label="Ingrédient" data-rline="${i}" data-k="p">${prodOptions(l.p)}</select><input aria-label="Quantité" type="number" step="any" min="0" inputmode="decimal" placeholder="${u||"qté"}" value="${l.q??""}" data-rline="${i}" data-k="q"><button type="button" class="x" data-act="delRLine" data-i="${i}" aria-label="Retirer">×</button></div>`}).join("")}
 function recipeCalc(price){const c=recipeCost(window.__recipe);price=ht(price);return `<span>Coût matière <b class="num">${chf(c)}</b></span><span>Marge${CFG.vat?" HT":""} <b class="num">${chf(price-c)}</b> ${marginPill(price?(price-c)/price:NaN)}</span>`}
 function eventFormSheet(id){
   const e=id?get("events",id):{date:today(),costs:[{l:"Emplacement",a:""}]};
-  window.__costs=(e.costs||[]).map(c=>({...c}));window.__dates=evDates(e).length?evDates(e):[today()];window.__esales=(e.sales||[]).map(x=>({...x}));
+  attInit("events",id,e.files);window.__costs=(e.costs||[]).map(c=>({...c}));window.__dates=evDates(e).length?evDates(e):[today()];window.__esales=(e.sales||[]).map(x=>({...x}));
   openSheet(`<div class="sheet-head"><h2>${id?"Modifier la manifestation":"Nouvelle manifestation"}</h2><button class="x" data-act="close" aria-label="Fermer">×</button></div>
   <form data-submit="event" data-id="${id||""}"><div class="fields">
    ${field("eName","Nom",`<input id="eName" name="name" required value="${esc(e.name||"")}" placeholder="ex. Marché de Noël">`,true)}
@@ -889,7 +1242,8 @@ function eventFormSheet(id){
   <p class="tiny muted" style="margin:0 0 8px">Pour les ventes faites sans la caisse de l’application, par exemple le total SumUp de la journée. Elles comptent dans le bénéfice de la manifestation et dans la comptabilité. Les ventes faites avec la caisse sont déjà comptées : ne les saisissez pas une deuxième fois.</p>
   <div class="lines" id="eSales">${saleLines()}</div>
   <button type="button" class="btn sm" style="margin-top:8px" data-act="addSLine">${ic("plus")}Ajouter un résultat</button>
-  ${field("eNote","Notes",`<textarea id="eNote" name="note" placeholder="Météo, affluence, idées pour la prochaine fois…">${esc(e.note||"")}</textarea>`)}
+   ${field("eNote","Notes",`<textarea id="eNote" name="note" placeholder="Météo, affluence, idées pour la prochaine fois…">${esc(e.note||"")}</textarea>`)}
+  ${attBlock("Contrat, facture de l’emplacement, photos du stand…")}
   <div class="formfoot">${id?`<button type="button" class="btn danger" data-act="delEvent" data-id="${id}" data-confirm="Supprimer la manifestation ?">Supprimer</button>`:"<span></span>"}<button class="btn primary">Enregistrer</button></div></form>`);
 }
 function dateLines(){return window.__dates.map((d,i)=>`<div class="line l3d"><input aria-label="Jour ${i+1}" type="date" required value="${esc(d||"")}" data-dline="${i}">${window.__dates.length>1?`<button type="button" class="x" data-act="delDLine" data-i="${i}" aria-label="Retirer ce jour">×</button>`:"<span></span>"}</div>`).join("")}
@@ -897,7 +1251,7 @@ const PAYS=["Mixte","Carte","TWINT","Espèces"];
 function saleLines(){return window.__esales.length?window.__esales.map((x,i)=>`<div class="line l4s"><input aria-label="Jour" type="date" value="${esc(x.d||window.__dates[0]||"")}" data-sline="${i}" data-k="d"><input aria-label="Montant encaissé CHF" type="number" step="0.05" min="0" inputmode="decimal" placeholder="CHF" value="${x.a??""}" data-sline="${i}" data-k="a"><select aria-label="Paiement" data-sline="${i}" data-k="p">${PAYS.map(p=>opt(p,p,x.p||"Mixte")).join("")}</select><input aria-label="Nombre de boissons" type="number" step="1" min="0" inputmode="numeric" placeholder="Nb boissons (facultatif)" value="${x.q??""}" data-sline="${i}" data-k="q"><button type="button" class="x" data-act="delSLine" data-i="${i}" aria-label="Retirer">×</button></div>`).join(""):`<p class="tiny muted" style="margin:0">Aucun résultat saisi.</p>`}
 function costLines(){return window.__costs.map((c,i)=>`<div class="line l4c"><input aria-label="Frais" list="costNames" value="${esc(c.l||"")}" placeholder="ex. Emplacement" data-cline="${i}" data-k="l"><input aria-label="Montant" type="number" step="0.05" min="0" inputmode="decimal" placeholder="${c.u==="%"?"%":"CHF"}" value="${c.a??""}" data-cline="${i}" data-k="a"><select aria-label="Unité" data-cline="${i}" data-k="u">${opt("CHF","CHF",c.u||"CHF")}${opt("%","% du CA",c.u)}</select><button type="button" class="x" data-act="delCLine" data-i="${i}" aria-label="Retirer">×</button></div>`).join("")+`<datalist id="costNames"><option value="Emplacement"><option value="Transport"><option value="Électricité"><option value="Parking"><option value="Aide / personnel"><option value="Glace"><option value="Commission sur le chiffre d’affaires"><option value="Consigne des verres"></datalist>`}
 function equipSheet(id){
-  const m=id?get("equipment",id):{qty:1,state:"Bon état",date:today(),compta:true};
+  const m=id?get("equipment",id):{qty:1,state:"Bon état",date:today(),compta:true};attInit("equipment",id,m.files);
   openSheet(`<div class="sheet-head"><h2>${id?esc(m.name):"Nouveau matériel"}</h2><button class="x" data-act="close" aria-label="Fermer">×</button></div>
   <form data-submit="equip" data-id="${id||""}"><div class="fields">
    ${field("qName","Nom",`<input id="qName" name="name" required value="${esc(m.name||"")}" placeholder="ex. Machine de scellage">`,true)}
@@ -909,10 +1263,11 @@ function equipSheet(id){
    ${field("qPlace","Rangé où",`<input id="qPlace" name="place" value="${esc(m.place||"")}" placeholder="ex. Dépôt, stand, voiture">`)}
    ${field("qNote","Notes",`<textarea id="qNote" name="note" placeholder="N° de série, garantie, entretien…">${esc(m.note||"")}</textarea>`,true)}
   </div><label class="check" style="margin-top:12px"><input type="checkbox" name="compta" ${m.compta!==false?"checked":""}> Compter cet achat dans la comptabilité</label>
+  ${attBlock("Facture, garantie, mode d’emploi, photo…")}
   <div class="formfoot">${id?`<button type="button" class="btn danger" data-act="delEquip" data-id="${id}" data-confirm="Supprimer ?">Supprimer</button>`:"<span></span>"}<button class="btn primary">Enregistrer</button></div></form>`);
 }
 function expenseSheet(id){
-  const x=id?get("expenses",id):{date:today(),cat:EXP_CATS[0]};
+  const x=id?get("expenses",id):{date:today(),cat:EXP_CATS[0]};attInit("expenses",id,x.files);
   openSheet(`<div class="sheet-head"><h2>${id?"Modifier la dépense":"Nouvelle dépense"}</h2><button class="x" data-act="close" aria-label="Fermer">×</button></div>
   <form data-submit="expense" data-id="${id||""}"><div class="fields">
    ${field("xLabel","Libellé",`<input id="xLabel" name="label" required value="${esc(x.label||"")}" placeholder="ex. Plein d’essence">`,true)}
@@ -920,7 +1275,7 @@ function expenseSheet(id){
    ${field("xDate","Date",`<input id="xDate" name="date" type="date" required value="${x.date}">`)}
    ${field("xCat","Catégorie",`<select id="xCat" name="cat">${EXP_CATS.map(c=>opt(c,c,x.cat)).join("")}</select>`)}
    ${field("xEv","Liée à une manifestation",`<select id="xEv" name="eventId"><option value="">Aucune</option>${all("events").sort((a,b)=>a.date<b.date?1:-1).map(e=>opt(e.id,e.name+" · "+fDate(e.date),x.eventId)).join("")}</select>`)}
-  </div><div class="formfoot">${id?`<button type="button" class="btn danger" data-act="delExpense" data-id="${id}" data-confirm="Supprimer ?">Supprimer</button>`:"<span></span>"}<button class="btn primary">Enregistrer</button></div></form>`);
+  </div>${attBlock("Photo du ticket ou PDF de la facture.")}<div class="formfoot">${id?`<button type="button" class="btn danger" data-act="delExpense" data-id="${id}" data-confirm="Supprimer ?">Supprimer</button>`:"<span></span>"}<button class="btn primary">Enregistrer</button></div></form>`);
 }
 
 /* ---------- Actions ---------- */
@@ -938,16 +1293,16 @@ const ACT={
   payCash:()=>{closeSheet();recordSale("Espèces")},
   cancelTicket:el=>{const b=get("sales",el.dataset.b);if(!b)return;put("sales",{...b,tickets:b.tickets.filter(t=>t.id!==el.dataset.id)});toast("Vente annulée, le stock est rétabli.","bunny")},
   newProduct:()=>productSheet(),openProduct:el=>productSheet(el.dataset.id),
-  delProduct:el=>{del("products",el.dataset.id);all("lots").filter(l=>l.productId===el.dataset.id).forEach(l=>del("lots",l.id));all("moves").filter(l=>l.productId===el.dataset.id).forEach(l=>del("moves",l.id));closeSheet()},
+  delProduct:el=>{delFiles(get("products",el.dataset.id));del("products",el.dataset.id);all("lots").filter(l=>l.productId===el.dataset.id).forEach(l=>del("lots",l.id));all("moves").filter(l=>l.productId===el.dataset.id).forEach(l=>del("moves",l.id));closeSheet()},
   wasteLot:el=>{const p=get("products",el.dataset.p);const q=+el.dataset.q;put("moves",{productId:p.id,qty:-q,lotId:el.dataset.l,date:today(),reason:"Produit jeté (périmé)",value:q*(+p.cost||0)});toast(`${fQty(q,p.unit)} de ${p.name} retiré du stock.`,"bunny")},
   newPurchase:()=>purchaseSheet(),editPurchase:el=>purchaseSheet(el.dataset.id),
   addPLine:()=>{window.__lines.push({});$("#puLines").innerHTML=purchaseLines()},
   delPLine:el=>{window.__lines.splice(+el.dataset.i,1);if(!window.__lines.length)window.__lines=[{}];$("#puLines").innerHTML=purchaseLines();$("#puTotal").textContent=chf(sum(window.__lines,l=>l.price))},
-  delPurchase:el=>{del("purchases",el.dataset.id);all("lots").filter(l=>l.purchaseId===el.dataset.id).forEach(l=>del("lots",l.id));closeSheet()},
+  delPurchase:el=>{delFiles(get("purchases",el.dataset.id));del("purchases",el.dataset.id);all("lots").filter(l=>l.purchaseId===el.dataset.id).forEach(l=>del("lots",l.id));closeSheet()},
   newMenu:()=>menuSheet(),editMenu:el=>menuSheet(el.dataset.id),
   addRLine:()=>{window.__recipe.push({});$("#mLines").innerHTML=recipeLines()},
   delRLine:el=>{window.__recipe.splice(+el.dataset.i,1);$("#mLines").innerHTML=recipeLines();$("#mCalc").innerHTML=recipeCalc($("#mPrice").value)},
-  delMenu:el=>{del("menu",el.dataset.id);closeSheet()},
+  delMenu:el=>{delFiles(get("menu",el.dataset.id));del("menu",el.dataset.id);closeSheet()},
   newEvent:()=>eventFormSheet(),editEvent:el=>eventFormSheet(el.dataset.id),openEvent:el=>eventSheet(el.dataset.id),
   addCLine:()=>{window.__costs.push({});$("#eCosts").innerHTML=costLines()},
   addDLine:()=>{const l=window.__dates[window.__dates.length-1];window.__dates.push(l?addDays(l,1):today());$("#eDates").innerHTML=dateLines()},
@@ -955,13 +1310,28 @@ const ACT={
   addSLine:()=>{window.__esales.push({d:window.__dates[window.__esales.length]||window.__dates[0],p:"Mixte"});$("#eSales").innerHTML=saleLines()},
   delSLine:el=>{window.__esales.splice(+el.dataset.i,1);$("#eSales").innerHTML=saleLines()},
   delCLine:el=>{window.__costs.splice(+el.dataset.i,1);$("#eCosts").innerHTML=costLines()},
-  delEvent:el=>{del("events",el.dataset.id);closeSheet()},
+  delEvent:el=>{delFiles(get("events",el.dataset.id));del("events",el.dataset.id);closeSheet()},
   sellAt:el=>{ls("kojitea-event",el.dataset.id);closeSheet();location.hash="caisse"},
-  newEquip:()=>equipSheet(),editEquip:el=>equipSheet(el.dataset.id),delEquip:el=>{del("equipment",el.dataset.id);closeSheet()},
-  newExpense:()=>expenseSheet(),editExpense:el=>expenseSheet(el.dataset.id),delExpense:el=>{del("expenses",el.dataset.id);closeSheet()},
+  newEquip:()=>equipSheet(),editEquip:el=>equipSheet(el.dataset.id),delEquip:el=>{delFiles(get("equipment",el.dataset.id));del("equipment",el.dataset.id);closeSheet()},
+  newExpense:()=>expenseSheet(),editExpense:el=>expenseSheet(el.dataset.id),delExpense:el=>{delFiles(get("expenses",el.dataset.id));del("expenses",el.dataset.id);closeSheet()},
+  newRecipe:()=>recipeSheet(),editRecipe:el=>recipeSheet(el.dataset.id),openRecipe:el=>recipeView(el.dataset.id),
+  delRecipe:el=>{delFiles(get("recipes",el.dataset.id));del("recipes",el.dataset.id);closeSheet();toast("Recette supprimée.","bunny")},
+  addILine:()=>{window.__ings.push({u:"g"});$("#rIngLines").innerHTML=ingLines();const l=document.querySelectorAll("#rIngLines input[data-k=n]");l[l.length-1]&&l[l.length-1].focus()},
+  delILine:el=>{window.__ings.splice(+el.dataset.i,1);if(!window.__ings.length)window.__ings=[{u:"g"}];$("#rIngLines").innerHTML=ingLines()},
+  rScale:el=>{const v=Math.max(1,Math.round(+window.__rv.n||1)+(+el.dataset.d));window.__rv.n=v;$("#rvN").value=v;$("#rvIngs").innerHTML=rvIngs()},
+  recipeExport:el=>recipeExport(el.dataset.k),
+  attOpen:el=>attOpen(el.dataset.id),attDel:el=>attRemove(el.dataset.id),
+  vclose:(el,e)=>{if(el.classList.contains("vscrim")&&e.target!==el)return;closeViewer()},
+  vshare:()=>{const v=window.__vf;if(v&&v.file)navigator.share({files:[v.file],title:v.name}).catch(()=>{})},
+  newCash:()=>cashSheetForm(),editCash:el=>cashSheetForm(el.dataset.id),delCash:el=>{del("cashcounts",el.dataset.id);closeSheet()},
   loadDemo:()=>loadDemo(),clearDemo:()=>clearDemo(),
-  wipe:()=>{COLS.forEach(c=>all(c).forEach(o=>del(c,o.id)));toast("Toutes les données ont été supprimées.","bunny")},
-  exportJson:()=>saveFile("koji-tea-sauvegarde-"+today()+".json",JSON.stringify({app:"koji-tea",version:1,exported:new Date().toISOString(),cfg:CFG,data:Object.fromEntries(COLS.map(c=>[c,all(c)]))},null,1)),
+  wipe:()=>{COLS.forEach(c=>all(c).forEach(o=>{delFiles(o);del(c,o.id)}));toast("Toutes les données ont été supprimées.","bunny")},
+  exportJson:async()=>{
+    const refs=new Map();COLS.forEach(c=>all(c).forEach(o=>(o.files||[]).forEach(f=>refs.set(f.id,f))));const files=[];let miss=0;
+    if(refs.size)toast("Préparation de la sauvegarde avec "+refs.size+" pièce"+(refs.size>1?"s":"")+" jointe"+(refs.size>1?"s":"")+"…","bear");
+    for(const f of refs.values()){try{const b=await fileGet(f);if(b)files.push({id:f.id,name:f.name,type:f.type,size:f.size,data:await b64(b)});else miss++}catch(e){miss++}}
+    await saveFile("koji-tea-sauvegarde-"+today()+".json",JSON.stringify({app:"koji-tea",version:2,exported:new Date().toISOString(),cfg:CFG,data:Object.fromEntries(COLS.map(c=>[c,all(c)])),files},null,1));
+    if(miss)setTimeout(()=>toast(miss+" pièce"+(miss>1?"s":"")+" jointe"+(miss>1?"s":"")+" non disponible"+(miss>1?"s":"")+" hors connexion n’"+(miss>1?"ont":"a")+" pas été incluse"+(miss>1?"s":"")+".","bunny"),3300)},
   exportSales:()=>{const rows=[["Date","Heure","Manifestation","Paiement","Article","Quantité","Prix unitaire","Total ligne","Coût matière"]];
     tickets().slice().reverse().forEach(t=>t.items.forEach(i=>rows.push([t.ts.slice(0,10),fTime(t.ts),(get("events",t.eventId)||{}).name||"",t.pay,i.n,i.q,i.p.toFixed(2),(i.p*i.q).toFixed(2),(i.c*i.q).toFixed(2)])));
     saveFile("koji-tea-ventes-"+today()+".csv",csv(rows))},
@@ -983,6 +1353,7 @@ document.addEventListener("click",e=>{
   const el=e.target.closest("[data-act]");if(!el)return;
   const a=el.dataset.act;if(!ACT[a])return;
   if(a==="scrim"){if(e.target===el)closeSheet();return}
+  if(a==="vclose"&&el.classList.contains("vscrim")){if(e.target===el)closeViewer();return}
   if(el.dataset.confirm&&!el.classList.contains("armed")){e.preventDefault();e.stopPropagation();const old=el.innerHTML;el.classList.add("armed");el.textContent=el.dataset.confirm;setTimeout(()=>{if(el.isConnected){el.classList.remove("armed");el.innerHTML=old}},3500);return}
   if(el.tagName!=="A")e.preventDefault();
   if(READONLY&&!["close","scrim","period","stockTab","comptaTab","goTab","openEvent","openProduct","exportJson","exportSales","exportJournal","copyDl","addCart","cartQty","clearCart"].includes(a)&&/^(new|edit|del|pay|cancel|waste|load|clear|wipe)/.test(a)){toast("Ce compte peut seulement consulter les données.","bunny");return}
@@ -991,6 +1362,10 @@ document.addEventListener("click",e=>{
 document.addEventListener("input",e=>{
   const t=e.target;
   if(t.dataset.input==="search"){UI.q=t.value;render()}
+  if(t.dataset.input==="rsearch"){UI.rq=t.value;render()}
+  if(t.dataset.input==="rscale"&&window.__rv){window.__rv.n=+t.value||0;if(+t.value>0)$("#rvIngs").innerHTML=rvIngs()}
+  if(t.dataset.iline!==undefined){window.__ings[+t.dataset.iline][t.dataset.k]=t.dataset.k==="q"?N(t.value):t.value}
+  if(t.dataset.denom!==undefined){let s=0,any=false;document.querySelectorAll("[data-denom]").forEach(i=>{if(i.value!==""){any=true;s+=(+i.value||0)*(+i.dataset.denom)}});if(any)$("#kAmount").value=(Math.round(s*100)/100).toFixed(2)}
   if(t.dataset.input==="cashIn"&&window.__cashUpd)window.__cashUpd(t.value);
   if(t.dataset.line!==undefined){window.__lines[+t.dataset.line][t.dataset.k]=t.dataset.k==="price"||t.dataset.k==="qty"?N(t.value):t.value;$("#puTotal").textContent=chf(sum(window.__lines,l=>l.price))}
   if(t.dataset.rline!==undefined){window.__recipe[+t.dataset.rline][t.dataset.k]=t.dataset.k==="q"?N(t.value):t.value;$("#mCalc").innerHTML=recipeCalc($("#mPrice").value)}
@@ -1009,13 +1384,16 @@ document.addEventListener("change",e=>{
   if(c==="posEvent"){ls("kojitea-event",t.value);render()}
   if(c==="year"){UI.year=t.value;render()}
   if(c==="jmonth"){UI.journalMonth=t.value;render()}
-  if(c==="import"&&t.files[0]){const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);if(j.app!=="koji-tea"||!j.data)throw 0;COLS.forEach(col=>(j.data[col]||[]).forEach(o=>put(col,o)));if(j.cfg)putCfg(j.cfg);toast("Sauvegarde restaurée.","bear")}catch(err){toast("Ce fichier n’est pas une sauvegarde Koji Tea.","bunny")}};r.readAsText(t.files[0])}
+  if(c==="import"&&t.files[0]){const r=new FileReader();r.onload=async()=>{let j;try{j=JSON.parse(r.result);if(j.app!=="koji-tea"||!j.data)throw 0}catch(err){toast("Ce fichier n’est pas une sauvegarde Koji Tea.","bunny");return}
+    for(const f of (j.files||[])){try{await fileSave({id:f.id,name:f.name,type:f.type,size:f.size},unb64(f.data,f.type))}catch(e){}}
+    COLS.forEach(col=>(j.data[col]||[]).forEach(o=>put(col,o)));if(j.cfg)putCfg(j.cfg);toast("Sauvegarde restaurée"+((j.files||[]).length?" avec "+j.files.length+" pièce"+(j.files.length>1?"s":"")+" jointe"+(j.files.length>1?"s":""):"")+".","bear")};r.readAsText(t.files[0])}
+  if(c==="attPick")attPick(t);
 });
 document.addEventListener("submit",e=>{
   const f=e.target;e.preventDefault();if(READONLY){toast("Ce compte peut seulement consulter les données.","bunny");return}
   const d=Object.fromEntries(new FormData(f));const id=f.dataset.id||undefined;const kind=f.dataset.submit;
   if(kind==="product"){
-    const o={...(id?get("products",id):{}),id,name:d.name.trim(),cat:d.cat,unit:d.unit,cost:N(d.cost)||0,min:N(d.min)||0,demo:false};
+    const o={...(id?get("products",id):{}),id,name:d.name.trim(),cat:d.cat,unit:d.unit,cost:N(d.cost)||0,min:N(d.min)||0,files:attCommit(),demo:false};
     const saved=put("products",o);
     if(!id&&N(d.init))put("moves",{productId:saved.id,qty:N(d.init),expiry:d.expiry||null,date:today(),reason:"Stock initial"});
     closeSheet();toast(id?"Produit mis à jour.":"Produit ajouté au stock.","bear");
@@ -1037,24 +1415,35 @@ document.addEventListener("submit",e=>{
     if(old)all("lots").filter(l=>l.purchaseId===id).forEach(l=>del("lots",l.id));
     const si=stockInfo();
     lines.forEach(l=>{const p=get("products",l.p);if(!p)return;const st=Math.max(si[p.id].stock,0);const nc=l.price>0?((st*(+p.cost||0))+l.price)/(st+l.qty):+p.cost||0;if(l.price>0)put("products",{...p,cost:Math.round(nc*1e5)/1e5,demo:false})});
-    const pu=put("purchases",{...(old||{}),id,date:d.date,supplier:d.supplier.trim(),note:d.note,lines,total:Math.round(sum(lines,l=>l.price)*100)/100,demo:false});
+    const pu=put("purchases",{...(old||{}),id,date:d.date,supplier:d.supplier.trim(),note:d.note,lines,files:attCommit(),total:Math.round(sum(lines,l=>l.price)*100)/100,demo:false});
     lines.forEach((l,i)=>put("lots",{id:pu.id+"-"+i,purchaseId:pu.id,productId:l.p,qty:l.qty,expiry:l.expiry,date:d.date}));
     closeSheet();toast(`Achat enregistré : ${chf(pu.total)}. Stock mis à jour.`,"bear");
   }
   if(kind==="menu"){
     const recipe=window.__recipe.filter(l=>l.p&&N(l.q)>0).map(l=>({p:l.p,q:+l.q}));
-    put("menu",{...(id?get("menu",id):{}),id,name:d.name.trim(),cat:d.cat||"Autres",price:N(d.price)||0,color:d.color||"#C9945F",recipe,active:!!d.active,demo:false});
+    put("menu",{...(id?get("menu",id):{}),id,name:d.name.trim(),cat:d.cat||"Autres",price:N(d.price)||0,color:d.color||"#C9945F",recipe,active:!!d.active,files:attCommit(),demo:false});
     closeSheet();toast("Carte mise à jour.","bear");
   }
   if(kind==="event"){
     const costs=window.__costs.filter(c=>(c.l||"").trim()&&N(c.a)>0).map(c=>({l:c.l.trim(),a:+c.a,u:c.u==="%"?"%":"CHF"}));
     const dates=[...new Set(window.__dates.filter(Boolean))].sort();if(!dates.length){toast("Indiquez au moins une date.","bunny");return}
     const sales=window.__esales.filter(x=>N(x.a)>0).map(x=>({d:x.d||dates[0],a:+x.a,p:x.p||"Mixte",q:N(x.q)||0}));
-    const ev=put("events",{...(id?get("events",id):{}),id,name:d.name.trim(),date:dates[0],dates,sales,hours:N(d.hours),place:d.place.trim(),note:d.note,costs,demo:false});
+    const ev=put("events",{...(id?get("events",id):{}),id,name:d.name.trim(),date:dates[0],dates,sales,hours:N(d.hours),place:d.place.trim(),note:d.note,costs,files:attCommit(),demo:false});
     closeSheet();toast("Manifestation enregistrée.","bear");if(!id&&dates.includes(today()))ls("kojitea-event",ev.id);
   }
-  if(kind==="equip"){put("equipment",{...(id?get("equipment",id):{}),id,name:d.name.trim(),cat:d.cat.trim()||"Autre",qty:N(d.qty)||1,price:N(d.price),date:d.date,state:d.state,place:d.place.trim(),note:d.note,compta:!!d.compta,demo:false});closeSheet();toast("Matériel enregistré.","bear")}
-  if(kind==="expense"){put("expenses",{...(id?get("expenses",id):{}),id,label:d.label.trim(),amount:N(d.amount)||0,date:d.date,cat:d.cat,eventId:d.eventId,demo:false});closeSheet();toast("Dépense enregistrée.","bear")}
+  if(kind==="equip"){put("equipment",{...(id?get("equipment",id):{}),id,name:d.name.trim(),cat:d.cat.trim()||"Autre",qty:N(d.qty)||1,price:N(d.price),date:d.date,state:d.state,place:d.place.trim(),note:d.note,compta:!!d.compta,files:attCommit(),demo:false});closeSheet();toast("Matériel enregistré.","bear")}
+  if(kind==="expense"){put("expenses",{...(id?get("expenses",id):{}),id,label:d.label.trim(),amount:N(d.amount)||0,date:d.date,cat:d.cat,eventId:d.eventId,files:attCommit(),demo:false});closeSheet();toast("Dépense enregistrée.","bear")}
+  if(kind==="recipe"){
+    const ings=window.__ings.filter(i=>String(i.n||"").trim()).map(i=>({n:i.n.trim(),q:N(i.q),u:i.u??"g"}));
+    const r=put("recipes",{...(id?get("recipes",id):{}),id,name:d.name.trim(),cat:d.cat.trim(),time:d.time.trim(),yq:N(d.yq),yu:d.yu.trim(),ings,steps:d.steps,note:d.note,files:attCommit(),demo:false});
+    closeSheet();toast("Recette enregistrée.","bear");recipeView(r.id);
+  }
+  if(kind==="cash"){
+    const ts=new Date(d.date+"T"+(d.time||"12:00")+":00").toISOString();const detail={};document.querySelectorAll("[data-denom]").forEach(i=>{if(+i.value>0)detail[i.dataset.denom]=+i.value});
+    put("cashcounts",{...(id?get("cashcounts",id):{}),id,kind:d.kind,amount:N(d.amount)||0,date:d.date,ts,eventId:d.eventId,note:d.note.trim(),detail:Object.keys(detail).length?detail:null,demo:false});
+    closeSheet();const B=cashBook();const row=B.rows.find(x=>x.e.ts===ts&&x.e.kind==="Comptage");
+    toast(row&&row.diff!=null?(Math.abs(row.diff)<.005?"Comptage enregistré : la caisse est juste.":"Comptage enregistré : écart de "+(row.diff>0?"+":"−")+" "+chf(Math.abs(row.diff))+"."):"Fonds de caisse enregistré.","bear");
+  }
   if(kind==="settings"){putCfg({vat:!!d.vat,vatRate:N(d.vatRate)??2.6,cardFee:N(d.cardFee)??0,twintFee:N(d.twintFee)??0});toast("Réglages enregistrés.","bear")}
 });
 let toastT;function toast(msg,img="bear"){clearTimeout(toastT);$("#toastRoot").innerHTML=`<div class="toast" role="status"><img alt="" src="${IMG[img]}">${esc(msg)}</div>`;toastT=setTimeout(()=>{$("#toastRoot").innerHTML=""},3200)}
