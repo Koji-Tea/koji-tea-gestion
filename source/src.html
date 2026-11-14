@@ -48,6 +48,7 @@ main{padding-block:16px 110px;padding-left:max(16px,env(safe-area-inset-left,0px
   padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 .tabbar a,.tabbar button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px 9px;text-decoration:none;color:var(--muted);font-size:.72rem;font-weight:700;background:none;border:0;cursor:pointer}
 .tabbar svg{width:24px;height:24px}
+.tabbar .tl{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(.62rem,2.75vw,.72rem);letter-spacing:-.01em}
 .tabbar .on{color:var(--deep)}
 .tabbar .on .ic{background:var(--surface-2)}
 .tabbar .ic{padding:3px 14px;border-radius:999px;display:grid;place-items:center}
@@ -316,7 +317,7 @@ const ICON={
  cash:'<rect x="3" y="6" width="18" height="12" rx="3"/><circle cx="12" cy="12" r="2.6"/><path d="M6.5 9.5v5M17.5 9.5v5"/>',
  box:'<path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/>',
  cup:'<path d="M6 7h12l-1.4 13.2a1 1 0 0 1-1 .8H8.4a1 1 0 0 1-1-.8z"/><path d="M5 7h14M13.5 7 15 2.5h2.5"/><circle cx="10" cy="17" r=".9"/><circle cx="13.5" cy="15.5" r=".9"/><circle cx="11.5" cy="13" r=".9"/>',
- tent:'<path d="M2.5 20 12 4l9.5 16z"/><path d="M12 4v16M8.5 20 12 13l3.5 7"/>',
+ tent:'<path d="M3 9.5 4.6 4h14.8L21 9.5"/><path d="M3 9.5a2.25 2.25 0 0 0 4.5 0 2.25 2.25 0 0 0 4.5 0 2.25 2.25 0 0 0 4.5 0 2.25 2.25 0 0 0 4.5 0"/><path d="M5 11.6V20h14v-8.4"/><path d="M9.5 20v-4.5h5V20"/>',
  tool:'<path d="M3.5 21h17"/><path d="M5.5 21V5.5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2V21"/><path d="M5.5 9.5h13"/><path d="M18.5 6h2.5"/><path d="M9.5 12.5h5l-.6 6.5h-3.8z"/><path d="M12 12.5V11"/>',
  book:'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 21H20v-3"/><path d="M8 7.5h8M8 11h5"/>',
  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
@@ -519,8 +520,8 @@ function nav(){
   const lab=(NAV.find(n=>n[0]===route)||[0,"Plus"])[1];
   $("#side").innerHTML=`<div class="logo"><img alt="Koji Tea" src="${IMG.logo}"></div>`+NAV.map(([k,l,i])=>`<a href="#${k}" class="${route===k?"on":""}">${ic(i)}${l}</a>`).join("")+
     `<div class="mascot"><img alt="" src="${IMG.bear}"><span>${modeLabel()}</span></div>`;
-  $("#tabbar").innerHTML=TAB.map(k=>{const n=NAV.find(x=>x[0]===k);return `<a href="#${k}" class="${route===k?"on":""}"><span class="ic">${ic(n[2])}</span>${k==="evenements"?"Événements":n[1]}</a>`}).join("")+
-    `<a href="#plus" class="${!TAB.includes(route)?"on":""}"><span class="ic">${ic("more")}</span>Plus</a>`;
+  $("#tabbar").innerHTML=TAB.map(k=>{const n=NAV.find(x=>x[0]===k);return `<a href="#${k}" class="${route===k?"on":""}"><span class="ic">${ic(n[2])}</span><span class="tl">${n[1]}</span></a>`}).join("")+
+    `<a href="#plus" class="${!TAB.includes(route)?"on":""}"><span class="ic">${ic("more")}</span><span class="tl">Plus</span></a>`;
   $("#ttl").textContent=route==="accueil"?"Koji Tea":lab;
   $("#modeTop").innerHTML=MODE==="local"?`<span class="dot" style="background:var(--warn)"></span>Cet appareil`:"";
   render();
